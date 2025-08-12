@@ -59,4 +59,3 @@ def show_images(*args, title: str = ""):
 
     plt.tight_layout()
     plt.show()
-

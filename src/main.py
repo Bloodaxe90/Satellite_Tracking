@@ -2,7 +2,7 @@ import os
 
 from src.camera.camera_setup import setup_camera
 from src.camera.camera_stream import CameraStream
-from src.utils.setup_kalman_filter import setup_kalman_filter
+from src.kalman_filter.kalman_filter_setup import setup_kalman_filter
 from src.fsm.fsm_calibration import get_amplitude_per_pixel
 from src.fsm.fsm import FSM
 from src.fsm.fsm_setup import setup_fsm
@@ -29,8 +29,8 @@ def main():
     FRAMES_DARK = 10                          # Number of frames to stack for median dark frame
 
     # FSM Parameters
-    PORT: str = "/dev/cu.usbserial-24127109"  # Serial port for FSM
-    BAUDRATE: int = 115200                    # Communication baudrate
+    PORT: str = "/dev/cu.usbmodem00000000001A1"  # Serial port for FSM
+    BAUDRATE: int = 256000                    # Communication baudrate
     TIMEOUT: int = 1                          # Serial timeout (seconds)
 
     # Kalman Filter Parameters
@@ -53,16 +53,9 @@ def main():
                                            start_pos=START_POS,
                                            num_frames=FRAMES_DARK,
                                            colour=COLOUR)
-        # Start the threaded camera stream
-        camera_stream = CameraStream(camera).start()
 
         # Initialize the FSM (Fast Steering Mirror)
         fsm: FSM = setup_fsm(PORT, BAUDRATE, TIMEOUT)
-
-        # Create a Kalman filter
-        kalman_filter = setup_kalman_filter(frame_rate=camera_stream.get_fps(),
-                                            model_uncertainty=MODEL_UNCERTAINTY,
-                                            measurement_uncertainty=MEASUREMENT_UNCERTAINTY)
 
         wait("Ready to calibrate amplitude per pixel.\n"
              "Please ensure the laser points to around the center of the camera")
@@ -81,6 +74,14 @@ def main():
 
         print(f"Amplitude Per Pixel X: {amplitude_per_pixel[0]} Y: {amplitude_per_pixel[1]}")
 
+        # Start the threaded camera stream
+        camera_stream = CameraStream(camera).start()
+
+        # Create a Kalman filter
+        kalman_filter = setup_kalman_filter(frame_rate=camera_stream.get_fps(),
+                                            model_uncertainty=MODEL_UNCERTAINTY,
+                                            measurement_uncertainty=MEASUREMENT_UNCERTAINTY)
+
         # Begin real-time laser tracking loop
         lazer_tracking(camera,
                        master_dark,
@@ -93,7 +94,7 @@ def main():
                        KERNEL_SIZE,
                        COLOUR)
 
-    except (KeyboardInterrupt, RuntimeError) as e:
+    except (KeyboardInterrupt, RuntimeError, AssertionError) as e:
         print(f"\nTracking stopped due to Error: {e}")
 
     finally:

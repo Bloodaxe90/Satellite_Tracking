@@ -107,6 +107,14 @@ def get_largest_contour(contour: Sequence[Mat | np.ndarray]) -> Mat | np.ndarray
     """
     return max(contour, key=cv2.contourArea)
 
+def get_rotated_frame(frame: np.ndarray,
+                      origin_pos: tuple,
+                      angle: float):
+    rotation_matrix = cv2.getRotationMatrix2D(origin_pos, angle, 1)
+    rotated_frame = cv2.warpAffine(frame, rotation_matrix, frame.shape)
+    return rotated_frame
+
+
 
 
 

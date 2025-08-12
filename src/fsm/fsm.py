@@ -75,32 +75,49 @@ class FSM:
         Background thread loop that sends commands from the buffer
         to the FSM device
         """
+        # #TODO also remove later
+        # amp = -0.04
+        # amp_incr = 0.000001
         while self.writing:
             try:
                 # Wait for a command to appear in the queue
                 command = self.command_buffer.get(block=True, timeout=0.1)
+
+                # # #TODO remove later
+                # command = f"xy={amp};{amp}"
+                # amp += amp_incr
+                # time.sleep(0.001)
+
+                self.serial.reset_input_buffer()
+
                 command_bytes: bytes = command.encode('utf-8') + b'\r\n'  # Add CR+LF
                 self.serial.write(command_bytes)
             except queue.Empty:
                 continue
 
-    def send_command(self, command: str, receive: bool = True):
+    def send_command(self, command: str, print_sent: bool = True, print_received: bool = True):
         """
         Sends a command to the FSM device and optionally waits for a response
 
         Args:
             command (str): The command to send (Refer to manual for valid FSM instructions)
-            receive (bool): Whether to read and print the response after sending (Added latency should be false during main fsm tracking loop)
+            print_sent (bool): Whether to print the sent command (Added latency should be false during main fsm tracking loop)
+            print_received (bool): Whether to read and print the response after sending (Added latency should be false during main fsm tracking loop)
         """
+
         if not self.serial or not self.serial.is_open:
             print("Not connected to FSM")
             return
 
-        print(f"Sent: {command}")
+        if print_sent:
+            print(f"Sent: {command}")
 
-        self.serial.reset_input_buffer()  # Clear old data before sending new command and ensuring input buffer doesn't overflow when receive is False extended periods
+        self.serial.reset_input_buffer()  # Clear old data before sending new command ensuring input buffer doesn't overflow when receive is False for extended periods
         self.command_buffer.put(command)
 
-        if receive:
+        if print_received:
             response: str = "\n".join(self.read_response())
             print(f"Received: {response}")
+
+
+

@@ -12,7 +12,7 @@ class LivePlotter:
     """
     def __init__(self,
                  root_dir: str,
-                 y_fields: tuple[tuple[str, str]],
+                 y_fields: tuple,
                  plot_name: str,
                  plot_size: int,
                  x_label: str,

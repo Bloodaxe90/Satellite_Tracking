@@ -120,11 +120,9 @@ def lazer_tracking(camera: asi.Camera,
         amplitude_y += delta_y * amplitude_per_pixel_y
 
         # Ensure amplitude stays within physical limits
-        amplitude_x = max(-1.5, min(1.5, amplitude_x))
-        amplitude_y = max(-1.5, min(1.5, amplitude_y))
+        amplitude_x = max(-1.0, min(1.0, amplitude_x))
+        amplitude_y = max(-1.0, min(1.0, amplitude_y))
 
         # Send control signals to FSM to adjust beam position
-        fsm.send_command(f"signal generate -a x -w dc -A {amplitude_x}",
-                         receive=False)
-        fsm.send_command(f"signal generate -a y -w dc -A {amplitude_y}",
-                         receive=False)
+        fsm.send_command(f"xy={amplitude_x};{amplitude_y}",
+                         print_received=False)
