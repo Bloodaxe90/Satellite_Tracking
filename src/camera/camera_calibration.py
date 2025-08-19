@@ -1,11 +1,15 @@
 import os
 import time
+from typing import Tuple, Any
 
 import cv2
 import numpy as np
 import zwoasi as asi
 
 from src.camera.camera_stream import CameraStream
+from src.camera.image_processing import get_contours, get_largest_contour, \
+    get_contour_origin, get_clean_frame, get_redness_frame
+from src.fsm.fsm import FSM
 
 
 def set_colour(camera: asi.Camera, colour: bool):
@@ -138,8 +142,8 @@ def set_roi(camera: asi.Camera,
     # Set the ROI using the given start position and resolution and adjust for binning
     camera.set_roi(start_x=start_pos[0],
                    start_y=start_pos[1],
-                   width=int(resolution[0] / bins),
-                   height=int(resolution[1] / bins),
+                   width=resolution[0],
+                   height=resolution[1],
                    bins=bins)
 
     start_x, start_y, width, height = camera.get_roi()
@@ -152,7 +156,7 @@ def set_roi(camera: asi.Camera,
 
 
 
-def get_master_dark(camera: asi.Camera, num_frames: int) -> np.ndarray:
+def get_master_dark(camera: asi.Camera, num_frames: int, file_name: str = "master_dark.npy") -> np.ndarray:
     """
     Returns the master dark frame either by loading an existing file or creating a new one
 
@@ -171,7 +175,7 @@ def get_master_dark(camera: asi.Camera, num_frames: int) -> np.ndarray:
         os.path.dirname(os.getcwd()),
         'resources',
         'dark_frame',
-        'master_dark.npy'
+        file_name
     )
 
     # Make sure we are capturing at least one frame

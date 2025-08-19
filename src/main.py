@@ -78,7 +78,7 @@ def main():
         camera_stream = CameraStream(camera).start()
 
         # Create a Kalman filter
-        kalman_filter = setup_kalman_filter(frame_rate=camera_stream.get_fps(),
+        kalman_filter = setup_kalman_filter(frame_rate=camera_stream.get_update_rate(),
                                             model_uncertainty=MODEL_UNCERTAINTY,
                                             measurement_uncertainty=MEASUREMENT_UNCERTAINTY)
 

@@ -52,16 +52,16 @@ class CameraStream:
         self.camera.stop_video_capture()
         print("Camera stream thread stopped")
 
-    def get_fps(self) -> float:
+    def get_update_rate(self) -> float:
         """
-        Computes and returns the approximate FPS from the timestamps buffer.
+        Computes and returns the approximate rate at which the latest frame is updated from the timestamps buffer.
 
         Returns:
-            float: Estimated frames per second.
+            float: Estimated update rate second.
         """
         with self.lock:
             if len(self.capture_time_buffer) < 2:
-                print("Buffer is not full enough to compute FPS")
+                print("Buffer is not full enough to compute update rate")
                 return 0.0
 
             time_elapsed: float = self.capture_time_buffer[1] - self.capture_time_buffer[0]

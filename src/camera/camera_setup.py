@@ -60,9 +60,9 @@ def setup_camera(root_dir: str,
     # Set Region of Interest (ROI)
     set_roi(camera, resolution, start_pos, bins)
 
-    # Set minimal USB bandwidth to avoid frame drops
-    min_bandwidth = camera.get_controls()['BandWidth']['MinValue']
-    camera.set_control_value(asi.ASI_BANDWIDTHOVERLOAD, min_bandwidth)
+    # Set max USB bandwidth
+    max_bandwidth = camera.get_controls()['BandWidth']['MaxValue']
+    camera.set_control_value(asi.ASI_BANDWIDTHOVERLOAD, max_bandwidth, auto= False)
 
     # Disable in-camera dark subtraction to work with raw data (this is done manually using my own code)
     camera.disable_dark_subtract()
@@ -72,6 +72,9 @@ def setup_camera(root_dir: str,
 
     # Set color mode if supported and requested
     set_colour(camera, colour)
+
+    # Enable High Speed Mode
+    camera.set_control_value(asi.ASI_HIGH_SPEED_MODE, 1)
 
     print_controls(camera)
 

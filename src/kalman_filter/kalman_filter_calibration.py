@@ -1,3 +1,5 @@
+from collections import deque
+
 import cv2
 import numpy as np
 
@@ -6,7 +8,10 @@ def is_sane_measurement(kalman_filter: cv2.KalmanFilter,
                         measured_x: float,
                         measured_y: float,
                         threshold: float = 9.21 # Chi-squared value for a p-value of 0.01.
-                        ):
+                        ) -> bool:
+
+    if measured_x is None or measured_y is None:
+        return False
 
     measurement = np.array([[measured_x], [measured_y]],
                            dtype=np.float32)
@@ -36,9 +41,6 @@ def set_transition_matrix(kalman_filter: cv2.KalmanFilter,
                 [0, 0, 1, 0], # new_vx = old_vx * 1
                 [0, 0, 0, 1]], # new_vy = old_vy * 1
         dtype=np.float32)
-
-
-
 
 # For constant acceleration
 #
