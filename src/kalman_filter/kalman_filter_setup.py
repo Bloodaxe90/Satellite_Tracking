@@ -3,12 +3,14 @@ import numpy as np
 
 from src.kalman_filter.kalman_filter_calibration import set_transition_matrix
 
-def setup_kalman_filter(delta_t: float,
-                        model_uncertainty: float = 0.05,
-                        measurement_uncertainty: float = 0.5
-                        ) -> cv2.KalmanFilter:
+
+def setup_kalman_filter(
+    delta_t: float,
+    model_uncertainty: float = 0.05,
+    measurement_uncertainty: float = 0.5,
+) -> cv2.KalmanFilter:
     """
-    Sets up a Kalman filter to track position and velocity using a constant acceleration model
+    Sets up a Kalman filter to track position and velocity using a constant velocity model
 
     Parameters:
         delta_t (float): The time between each transition
@@ -19,23 +21,23 @@ def setup_kalman_filter(delta_t: float,
         cv2.KalmanFilter: Configured Kalman filter object
     """
 
+    print("Setting up Kalman Filter\n")
     # States of x position, y position, x velocity, y velocity
     # Measures the x position and y position
     kalman_filter: cv2.KalmanFilter = cv2.KalmanFilter(4, 2)
 
-    kalman_filter.measurementMatrix = np.array([
-        [1, 0, 0, 0],  # x position
-        [0, 1, 0, 0]   # y position
-    ], dtype=np.float32)
+    kalman_filter.measurementMatrix = np.array(
+        [[1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.float32  # x position  # y position
+    )
 
-    set_transition_matrix(kalman_filter,
-                          delta_t)
+    set_transition_matrix(kalman_filter, delta_t)
 
     # Process noise covariance: Uncertainty in our model
     kalman_filter.processNoiseCov = np.eye(4, dtype=np.float32) * model_uncertainty
 
     # Measurement noise covariance: Uncertainty in the measurements (from sensor/camera)
-    kalman_filter.measurementNoiseCov = np.eye(2, dtype=np.float32) * measurement_uncertainty
-
+    kalman_filter.measurementNoiseCov = (
+        np.eye(2, dtype=np.float32) * measurement_uncertainty
+    )
 
     return kalman_filter

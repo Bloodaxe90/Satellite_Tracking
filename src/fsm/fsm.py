@@ -22,8 +22,12 @@ class FSM:
         self.baudrate: int = baudrate
         self.timeout: float = timeout
         self.serial: serial.Serial = None
-        self.write_thread: threading.Thread = threading.Thread(target=self.write_loop, daemon=True)
-        self.command_buffer: queue.Queue = queue.Queue()  # Thread safe queue to store outgoing commands
+        self.write_thread: threading.Thread = threading.Thread(
+            target=self.write_loop, daemon=True
+        )
+        self.command_buffer: queue.Queue = (
+            queue.Queue()
+        )  # Thread safe queue to store outgoing commands
         self.writing: bool = False  # Flag to control the write thread
 
     def connect(self):
@@ -35,9 +39,9 @@ class FSM:
             self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
             self.writing = True
             self.write_thread.start()
-            print(f"Connected to FSM on {self.port} & write thread started")
+            print(f"Connected to FSM on {self.port} & write thread started \n")
         except serial.SerialException as e:
-            print(f"Error: {e}, Failed to connect to port {self.port}")
+            print(f"Error: {e}, Failed to connect to port {self.port} \n")
 
     def disconnect(self):
         """
@@ -47,7 +51,7 @@ class FSM:
             self.writing = False
             self.write_thread.join()
             self.serial.close()
-            print("Disconnected from FSM")
+            print("Disconnected from FSM\n")
 
     def read_response(self) -> list:
         """
@@ -61,7 +65,7 @@ class FSM:
             if self.serial.in_waiting > 0:
                 line = self.serial.readline()
                 if line:
-                    response_lines.append(line.decode('utf-8').strip())
+                    response_lines.append(line.decode("utf-8").strip())
             else:
                 time.sleep(0.1)
 
@@ -75,27 +79,21 @@ class FSM:
         Background thread loop that sends commands from the buffer
         to the FSM device
         """
-        # #TODO also remove later
-        # amp = -0.04
-        # amp_incr = 0.000001
         while self.writing:
             try:
                 # Wait for a command to appear in the queue
                 command = self.command_buffer.get(block=True, timeout=0.1)
 
-                # # #TODO remove later
-                # command = f"xy={amp};{amp}"
-                # amp += amp_incr
-                # time.sleep(0.001)
-
                 self.serial.reset_input_buffer()
 
-                command_bytes: bytes = command.encode('utf-8') + b'\r\n'  # Add CR+LF
+                command_bytes: bytes = command.encode("utf-8") + b"\r\n"  # Add CR+LF
                 self.serial.write(command_bytes)
             except queue.Empty:
                 continue
 
-    def send_command(self, command: str, print_sent: bool = True, print_received: bool = True):
+    def send_command(
+        self, command: str, print_sent: bool = True, print_received: bool = True
+    ):
         """
         Sends a command to the FSM device and optionally waits for a response
 
@@ -118,6 +116,3 @@ class FSM:
         if print_received:
             response: str = "\n".join(self.read_response())
             print(f"Received: {response}")
-
-
-
