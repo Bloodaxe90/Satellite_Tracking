@@ -1,0 +1,44 @@
+run_mode: 'tracking'
+
+camera:
+    sdk_lib_name: "libASICamera2.dylib"
+    camera_id: 0
+    bins: 2
+    gain: 120
+    exposure: 32
+    max_resolution: [8288, 5640]
+    start_pos: [0, 0]
+    dark_frames: 10
+
+fsm:
+    port: "/dev/cu.usbmodem00000000001A1"
+    baudrate: 256000
+    absolute_max_amplitude: 1.0
+    absolute_min_amplitude: -1.0
+    use_fsm_roi: True
+    generate_origin: False
+
+simulation_fsm:
+    enabled: False
+    amplitude_step_size: [0.00005, 0.00005]
+
+kalman_filter:
+    enabled: True
+    model_uncertainty: 1.0e-6
+    measurement_uncertainty: 5.0
+    learning_iterations: 200
+    insane_threshold: 5
+
+tuner_params:
+    tune_iterations: 1000
+    search_iterations: 6
+    initial_model_uncertainties: [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2]
+    initial_measurement_uncertainties: [0.01, 0.1, 1.0, 10.0, 100.0]
+    model_reduction_factor: 0.8
+    measurement_reduction_factor: 0.5
+    error_weight: 2
+    sane_weight: 1
+
+general:
+    feedback_rate: 100
+    experiment_name_prefix: "tracking_sine"

@@ -2,7 +2,10 @@ import os
 import datetime
 import pandas as pd
 
-def save_results(root_dir: str, results: pd.DataFrame, exp_name: str, final: bool = False):
+
+def save_results(
+    root_dir: str, results: pd.DataFrame, exp_name: str, final: bool = False
+):
     """
     Save a pandas DataFrame as a CSV file to a specific directory
 
@@ -14,6 +17,7 @@ def save_results(root_dir: str, results: pd.DataFrame, exp_name: str, final: boo
               (i.e. final results would be saved with final as True)
 
     """
+    print("Saving Results")
     # Create directory path with current date
     if final:
         result_dir = f"{root_dir}/results"
@@ -27,7 +31,7 @@ def save_results(root_dir: str, results: pd.DataFrame, exp_name: str, final: boo
 
     # Save results
     results.to_csv(f"{result_dir}/{exp_name}", index=False)
-    print(f"Saved {exp_name} in directory: {result_dir}")
+    print(f"Saved {exp_name} in directory: {result_dir}\n")
 
 
 def load_results(root_dir: str, exp_name: str, date_dir: str = "") -> pd.DataFrame:
@@ -42,6 +46,7 @@ def load_results(root_dir: str, exp_name: str, date_dir: str = "") -> pd.DataFra
     Returns:
         pd.DataFrame: Loaded DataFrame from the CSV file
     """
+    print("Loading Results")
     # Build directory path for given date, if not date_dir is given load results from result directory
     if date_dir:
         result_dir = f"{root_dir}/logs/{date_dir}"
