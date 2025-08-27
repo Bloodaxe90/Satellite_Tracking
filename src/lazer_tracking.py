@@ -37,7 +37,7 @@ def lazer_tracking(
 
     wait("Start Tracking?")
 
-    learning_iterations_kf = config['kalman_filter']["learning_iterations_kf"]
+    learning_iterations_kf = config['kalman_filter']["learning_iterations"]
     insane_threshold = config['kalman_filter']["insane_threshold"]
     feedback_rate = config['general']["feedback_rate"]
 
@@ -63,8 +63,9 @@ def lazer_tracking(
         sample_time = current_time - last_time
         last_time = current_time
 
-        set_transition_matrix(kalman_filter, sample_time)
-        kalman_filter.predict()
+        if kalman_filter:
+            set_transition_matrix(kalman_filter, sample_time)
+            kalman_filter.predict()
 
         raw_frame = camera_stream.read()
         if raw_frame is None:
@@ -79,7 +80,8 @@ def lazer_tracking(
         contours = get_contours(clean_frame)
         avg_largest_contour_search_time = (
             np.mean(largest_contour_search_times, axis=0) if first_measurement else 0
-        )
+        ) if not first_measurement else 0
+
         if contours:
             largest_contour_search_time = time.time()
             largest_contour = get_largest_contour(contours)
@@ -104,7 +106,7 @@ def lazer_tracking(
 
             insane_count += -insane_count if sane_measurement else 1
 
-            if insane_count > insane_threshold:
+            if insane_count < insane_threshold or measured_x is not None or measured_y is not None:
                 if first_measurement:
                     first_measurement = False
                     kalman_filter.errorCovPost = np.eye(4, dtype=np.float32)
@@ -120,9 +122,7 @@ def lazer_tracking(
                 new_x = estimated_state[0, 0]
                 new_y = estimated_state[1, 0]
 
-            print(
-                f"M {measured_x} {measured_y}\nE {kalman_filter.statePost[0, 0]} {kalman_filter.statePost[1, 0]}\nSane {sane_measurement}"
-            )
+        assert new_x is not None and new_y is not None, "No Contours were found"
 
         delta_x = origin_x - new_x
         delta_y = origin_y - new_y

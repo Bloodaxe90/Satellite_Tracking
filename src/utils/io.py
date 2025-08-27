@@ -59,5 +59,5 @@ def load_results(root_dir: str, exp_name: str, date_dir: str = "") -> pd.DataFra
     if ".csv" not in exp_name:
         exp_name += ".csv"
 
-    print(f"Loaded {exp_name} from directory: {result_dir}")
-    return pd.read_csv(f"{result_dir}/{exp_name}\n")
+    print(f"Loaded {exp_name} from directory: {result_dir}\n")
+    return pd.read_csv(f"{result_dir}/{exp_name}")

@@ -122,3 +122,24 @@ def get_rotated_frame(frame: np.ndarray, origin_pos: tuple, angle: float) -> np.
     rotated_frame = cv2.warpAffine(frame, rotation_matrix, frame.shape)
 
     return rotated_frame
+
+def get_mean_contour_intensity(contour: Sequence[Mat | np.ndarray], frame: np.ndarray) -> float:
+    """
+    Calculates the mean intensity of all pixels within a given contour.
+
+    Args:
+        frame (np.ndarray): The input grayscale image
+        contour: The specific contour to get mean intensity of (laser blob)
+
+    Returns:
+        float: The mean pixel intensity of the blob, or 0.0 if the contour is invalid.
+    """
+
+    mask = np.zeros(frame.shape, dtype=np.uint8)
+
+    cv2.drawContours(mask, [contour], -1, color=255, thickness=cv2.FILLED)
+
+    mean_val_tuple = cv2.mean(frame, mask=mask)
+    mean_intensity = mean_val_tuple[0]
+
+    return mean_intensity

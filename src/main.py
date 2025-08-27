@@ -10,14 +10,15 @@ from src.utils.io import save_results
 
 def main():
 
-    with open('config.yaml', 'r') as f:
+    ROOT_DIR = os.path.dirname(os.getcwd())
+
+
+    with open(f'{ROOT_DIR}/config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
     cam_cfg = config['camera']
     fsm_cfg = config['fsm']
     kf_cfg = config['kalman_filter']
-
-    ROOT_DIR = os.path.dirname(os.getcwd())
 
     EXPERIMENT_NAME = (
         f"{config['general']['experiment_name_prefix']}_"
@@ -28,7 +29,7 @@ def main():
         f"KF{1 if kf_cfg['enabled'] else 0}_"
         f"MOU{kf_cfg['model_uncertainty']}_"
         f"MEU{kf_cfg['measurement_uncertainty']}_"
-        f"FR{1 if fsm_cfg['use_roi_calibration'] else 0}"
+        f"FR{1 if fsm_cfg['use_fsm_roi'] else 0}"
     )
 
     amplitude_bounds = (
@@ -41,6 +42,7 @@ def main():
     camera = None
     camera_stream = None
     fsm = None
+    results = None
 
     try:
 
@@ -64,29 +66,6 @@ def main():
         if run_mode == 'tracking':
             results = pd.DataFrame(
                 columns=[
-                    "model_uncertainty",
-                    "measurement_uncertainty",
-                    "error_x",
-                    "error_y",
-                    "sane_rate",
-                ]
-            )
-
-            tuner(
-                config= config,
-                camera_stream= camera_stream,
-                fsm= fsm,
-                results= results,
-                master_dark= master_dark,
-                origin_pos= origin_pos,
-                distances= distances,
-                fsm_sleep_time= fsm_sleep_time,
-                amplitude_bounds= amplitude_bounds
-            )
-
-        elif run_mode == "tuner":
-            results = pd.DataFrame(
-                columns=[
                     "measured_X",
                     "measured_Y",
                     "estimated_X",
@@ -108,6 +87,30 @@ def main():
                 amplitude_bounds=amplitude_bounds,
                 kalman_filter=kalman_filter,
             )
+        elif run_mode == "tuning":
+            results = pd.DataFrame(
+                columns=[
+                    "model_uncertainty",
+                    "measurement_uncertainty",
+                    "error_x",
+                    "error_y",
+                    "sane_rate",
+                ]
+            )
+
+            tuner(
+                config= config,
+                camera_stream= camera_stream,
+                fsm= fsm,
+                results= results,
+                master_dark= master_dark,
+                origin_pos= origin_pos,
+                distances= distances,
+                fsm_sleep_time= fsm_sleep_time,
+                amplitude_bounds= amplitude_bounds
+            )
+        else:
+            print(f"Run mode {run_mode} is not a valid run mode")
 
 
 
@@ -116,14 +119,15 @@ def main():
 
     finally:
         print("Cleaning up")
+        if camera_stream is not None:
+            camera_stream.stop()
         if camera is not None:
             camera.close()
         if fsm is not None:
             fsm.send_command("xy=0;0")
             fsm.disconnect()
-        if camera_stream is not None:
-            camera_stream.stop()
-        save_results(ROOT_DIR, results, f"{EXPERIMENT_NAME}")
+        if results is not None:
+            save_results(ROOT_DIR, results, f"{EXPERIMENT_NAME}")
         print("Cleanup complete.")
 
 

@@ -3,6 +3,8 @@ import time
 import numpy as np
 import zwoasi as asi
 
+from src.utils.general import wait
+
 
 def reset_settings(camera: asi.Camera):
     """
@@ -167,7 +169,8 @@ def get_master_dark(
         master_dark = np.median(dark_frames, axis=0).astype(np.uint8)
 
         np.save(file_path, master_dark)
-        print("New Master Dark created and saved\n")
+        wait("New Master Dark created and saved, have you remove the lens cap?")
+
     else:
         master_dark = np.load(file_path)
         print("Master Dark loaded\n")

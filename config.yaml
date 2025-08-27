@@ -15,15 +15,15 @@ fsm:
     baudrate: 256000
     absolute_max_amplitude: 1.0
     absolute_min_amplitude: -1.0
-    use_fsm_roi: True
-    generate_origin: False
+    use_fsm_roi: False
+    generate_origin: True
 
-simulation_fsm:
+linear_fsm:
     enabled: False
     amplitude_step_size: [0.00005, 0.00005]
 
 kalman_filter:
-    enabled: True
+    enabled: False
     model_uncertainty: 1.0e-6
     measurement_uncertainty: 5.0
     learning_iterations: 200

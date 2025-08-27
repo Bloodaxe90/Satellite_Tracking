@@ -61,14 +61,8 @@ def test():
 
     # Linear FSM
     FSM_LINEAR = True
-    initial_amplitude_x = -0.04
-    initial_amplitude_y = -0.04
-    linear_amp_incr_x = 0.00001
-    linear_amp_incr_y = 0.00001
-    amp_x_acc = 1.005
-    amp_y_acc = 1.005
-    amp_x_dec = 2 - amp_x_acc
-    amp_y_dec = 2 - amp_y_acc
+    linear_amp_incr_x = 0.00005
+    linear_amp_incr_y = 0.00005
 
 
     EXPERIMENT_NAME: str = (
@@ -121,7 +115,7 @@ def test():
 
         if FSM_LINEAR:
             fsm: FSM = setup_fsm(PORT, BAUDRATE, TIMEOUT)
-            fsm.send_command(f"xy={initial_amplitude_x};{initial_amplitude_y}", False, False)
+            fsm.send_command(f"xy=0;0", False, False)
             time.sleep(1)
 
         if FSM:
@@ -171,8 +165,8 @@ def test():
         wait("Start?")
         largest_contour_search_times = deque(maxlen=10)
         old_dropped_frames = 0
-        amplitude_x = initial_amplitude_x
-        amplitude_y = initial_amplitude_y
+        amplitude_x = 0
+        amplitude_y = 0
         start_time = time.time()
         last_time = start_time
         last_sleep_time = start_time
@@ -228,7 +222,7 @@ def test():
 
                 insane_count += -insane_count if sane_measurement else 1
 
-                if insane_count > INSANE_THRESHOLD:
+                if insane_count < INSANE_THRESHOLD:
                     if first_measurement:
                         first_measurement = False
                         kalman_filter.errorCovPost = np.eye(4, dtype=np.float32)
@@ -292,9 +286,6 @@ def test():
             if FSM_LINEAR:
                 amplitude_x += linear_amp_incr_x
                 amplitude_y += linear_amp_incr_y
-                linear_amp_incr_x *= (amp_x_acc if amplitude_x < 0 and amplitude_y < 0 else amp_x_dec)
-                linear_amp_incr_y *= (amp_y_acc if amplitude_x < 0 and amplitude_y < 0 else amp_y_dec)
-                print(linear_amp_incr_x, linear_amp_incr_y, amplitude_x, amplitude_y)
                 fsm.send_command(f"xy={amplitude_x};{amplitude_y}", False, False)
 
 

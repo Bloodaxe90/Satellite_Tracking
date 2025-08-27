@@ -31,7 +31,7 @@ def tuner(
     amplitude_bounds: tuple,
 ):
 
-    sim_fsm_cfg = config['simulation_fsm']
+    sim_fsm_cfg = config['linear_fsm']
     tun_cfg = config['tuner_params']
 
     print("Tuning Parameters")
@@ -94,6 +94,8 @@ def tuner(
                     clean_frame = get_clean_frame(raw_frame, master_dark)
 
                     contours = get_contours(clean_frame)
+                    assert contours, "No Contours were found"
+
                     largest_contour = get_largest_contour(contours)
                     measured_x, measured_y = get_contour_origin(largest_contour)
 

@@ -10,7 +10,7 @@ from src.camera.image_processing import (
     get_contours,
     get_contour_origin,
     get_largest_contour,
-    get_stacked_frame,
+    get_stacked_frame, get_mean_contour_intensity,
 )
 from src.fsm.fsm import FSM
 
@@ -21,7 +21,7 @@ def get_alignment_offset_angle(
     origin_pos: tuple[float, float],
     fsm: FSM,
     amplitude_bounds: tuple,
-    amplitude: float = 0.04,
+    amplitude: float = -0.01,
     num_frames: int = 10,
 ) -> tuple[float, ...]:
     """
@@ -34,7 +34,7 @@ def get_alignment_offset_angle(
         origin_pos (tuple[float, float]): Original laser dot (x, y) position in pixels
         fsm (FSM): FSM for sending axis movement commands
         amplitude_bounds (tuple): The maximum and minimum amplitudes for each axis in each direction
-        amplitude (float, optional): Movement amplitude for FSM axis calibration (default: 0.04)
+        amplitude (float, optional): Movement amplitude for FSM axis calibration (default: -0.01)
         num_frames (int, optional): Number of frames to stack across (default: 10)
 
     Returns:
@@ -76,6 +76,7 @@ def get_alignment_offset_angle(
 
         # Find the laser dot position from contours
         contours = get_contours(calibrate_image)
+        assert contours, "No Contours were found"
         largest_contour = get_largest_contour(contours)
         calibrated_pos_x, calibrated_pos_y = get_contour_origin(largest_contour)
 
@@ -104,7 +105,8 @@ def get_fsm_roi_and_amplitude_bounds(
     padding: int = 20,
     amplitude_incr: float = 0.001,
     learning_iterations: int = 10,
-    std_devs: float = 5,
+    intensity_std_devs: float = 10,
+    distance_moved_std_devs: float = 5,
 ) -> tuple:
     """
     Determines the region of interest (ROI) and amplitude bounds for the FSM.
@@ -116,9 +118,10 @@ def get_fsm_roi_and_amplitude_bounds(
         fsm (FSM): FSM for sending movement commands
         max_resolution (tuple[int, int]): Maximum resolution (width, height) of the camera
         padding (int, optional): Extra padding around detected ROI in pixels (default: 20)
-        amplitude_incr (float, optional): Increment/decrement step size for FSM movement (default=0.001)
-        learning_iterations (int, optional): Number of iterations used to learn baseline movement distances (default=10)
-        std_devs (float, optional): Number of standard deviations above baseline to define movement threshold (default=5)
+        amplitude_incr (float, optional): Increment/decrement step size for FSM movement (default: 0.001)
+        learning_iterations (int, optional): Number of iterations used to learn baseline movement distances (default: 10)
+        intensity_std_devs (float, optional): Number of standard deviations above baseline to define intensity threshold (default: 10)
+        distance_moved_std_devs (float, optional): Number of standard deviations above baseline to define movement threshold (default: 5)
 
     Returns:
         tuple: (start_pos, resolution, amplitudes)
@@ -130,7 +133,7 @@ def get_fsm_roi_and_amplitude_bounds(
     bounds = []
     amplitudes = []
 
-    print(f"Calibrating fsm roi and amplitude bounds")
+    print(f"Calibrating fsm roi and amplitude bounds (this may take some time)")
 
     for idx, axis in enumerate(["x", "y"]):
         for _ in range(2):
@@ -138,6 +141,8 @@ def get_fsm_roi_and_amplitude_bounds(
             position = None
             first_iteration = True
             distances_moved = deque(maxlen=learning_iterations)
+            intensities = deque(maxlen=learning_iterations)
+
             amplitude = 0
             amplitude_incr = amplitude_incr * -1  # change scan direction
 
@@ -171,24 +176,28 @@ def get_fsm_roi_and_amplitude_bounds(
                 largest_contour = get_largest_contour(contours)
                 position = get_contour_origin(largest_contour)
 
+                intensity = get_mean_contour_intensity(largest_contour, calibrate_image)
+
                 if last_position:
                     # Measure displacement of laser dot along the scanned axis
                     distance_moved = np.linalg.norm(position[idx] - last_position[idx])
-
                     # Build up baseline movement
                     if i < learning_iterations:
                         distances_moved.append(distance_moved)
+                        intensities.append(intensity)
                     else:
-                        # Use baseline movement to detect boundry
-                        mean_distance_moved = np.mean(distances_moved, axis=0)
-                        std_dev_distance_moved = np.std(distances_moved, axis=0)
-                        threshold = mean_distance_moved + (
-                            std_devs * std_dev_distance_moved
+                        # Use baseline movement or intensity to detect boundry
+                        threshold_distance_moved = np.mean(distances_moved, axis=0) + (
+                            distance_moved_std_devs * np.std(distances_moved, axis=0)
+                        )
+                        threshold_intensity = np.mean(intensities, axis=0) - (
+                            intensity_std_devs * np.std(intensities, axis=0)
                         )
 
-                        # If displacement exceeds threshold then the boundary is reached
-                        if distance_moved > threshold:
+                        # If displacement or intensity exceeds threshold then the boundary is reached
+                        if distance_moved > threshold_distance_moved or intensity < threshold_intensity:
                             break
+
 
                 amplitude += amplitude_incr
                 last_position = position
@@ -226,10 +235,10 @@ def get_fsm_roi_and_amplitude_bounds(
     fsm.send_command("xy=0;0", print_received=False)
 
     print(
-        f"Original Bounds Positions: min X {min_x}, max X {max_x}, min Y {min_y}, max Y {max_y}"
-        f"Starting Position: {start_pos}"
-        f"Resolution: {resolution}"
-        f"Amplitude Bounds min X {amplitudes[0]}, max X {amplitudes[1]}, min Y {amplitudes[2]}, max Y {amplitudes[3]}\n"
+        f"Original Bounds Positions: min X {min_x}, max X {max_x}, min Y {min_y}, max Y {max_y}\n"
+        f"Starting Position: {start_pos}\n"
+        f"Resolution: {resolution}\n"
+        f"Amplitude Bounds: min X {amplitudes[0]}, max X {amplitudes[1]}, min Y {amplitudes[2]}, max Y {amplitudes[3]}\n"
     )
 
     return start_pos, resolution, amplitudes
@@ -241,7 +250,7 @@ def get_distance_to_camera(
     origin_pos: tuple[float, float],
     fsm: FSM,
     amplitude_bounds: tuple,
-    amplitude: float = 0.04,
+    amplitude: float = -0.01,
     num_frames: int = 10,
 ) -> tuple[float, float]:
     """
@@ -256,7 +265,7 @@ def get_distance_to_camera(
         origin_pos (tuple[float, float]): Initial (x, y) pixel coordinates of the laser
         fsm (FSM): FSM for sending movement commands
         amplitude_bounds (tuple): The maximum and minimum amplitudes for each axis in each direction
-        amplitude (float, optional): Normalized FSM displacement in both axes (default: 0.04).
+        amplitude (float, optional): Normalized FSM displacement in both axes (default: -0.01).
         num_frames (int, optional): Number of frames to stack across (default: 10)
 
     Returns:
@@ -293,6 +302,7 @@ def get_distance_to_camera(
 
     # Find laser position
     contours = get_contours(calibrate_image)
+    assert contours, "No Contours were found"
     largest_contour = get_largest_contour(contours)
     calibrated_pos_x, calibrated_pos_y = get_contour_origin(largest_contour)
 
@@ -320,7 +330,7 @@ def get_response_time(
     fsm: FSM,
     amplitude_bounds: tuple,
     measurements: int = 100,
-    max_amplitude: float = -0.02,
+    max_amplitude: float = -0.01,
     threshold: int = 5,
 ) -> float:
     """
@@ -333,14 +343,14 @@ def get_response_time(
         fsm (FSM): FSM used to send movement commands
         amplitude_bounds (tuple): The maximum and minimum amplitudes for each axis in each direction
         measurements (int, optional): Number of response time measurements to collect (default: 100)
-        max_amplitude (float, optional): FSM movement amplitude (default: -0.02).
+        max_amplitude (float, optional): FSM movement amplitude (default: -0.01).
         threshold (int, optional): Minimum pixel displacement in both axes to count as a valid movement (default: 5)
 
     Returns:
         float: Average FSM response time in seconds across all measurements
     """
 
-    amplitude = 0
+    amplitude = max_amplitude
     last_measured_x = 0
     last_measured_y = 0
     first_iteration = True
@@ -350,6 +360,8 @@ def get_response_time(
     min_amplitude_x, max_amplitude_x, min_amplitude_y, max_amplitude_y = (
         amplitude_bounds
     )
+
+    fsm.send_command(f"xy=0;0", False, False)
 
     assert (
         min_amplitude_x < amplitude < max_amplitude_x
@@ -374,6 +386,7 @@ def get_response_time(
 
         # Find laser position
         contours = get_contours(clean_frame)
+        assert contours, "No Contours were found"
         largest_contour = get_largest_contour(contours)
         measured_x, measured_y = get_contour_origin(largest_contour)
 
@@ -391,8 +404,8 @@ def get_response_time(
                 times.append(current_time - last_time)
                 last_time = current_time
 
-        # Change amplitude for next iteration
-        amplitude = max_amplitude if amplitude == 0 else 0
+                # Change amplitude for next iteration
+                amplitude = max_amplitude if amplitude == 0 else 0
 
         last_measured_x = measured_x
         last_measured_y = measured_y

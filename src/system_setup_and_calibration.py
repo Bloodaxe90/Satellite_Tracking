@@ -43,6 +43,7 @@ def system_setup_and_calibration(
 
     bins = cam_cfg['bins']
     max_resolution = cam_cfg["max_resolution"]
+    initial_resolution = tuple([int(val / bins) for val in max_resolution])
 
     camera, master_dark = setup_camera(
         root_dir=root_dir,
@@ -51,7 +52,7 @@ def system_setup_and_calibration(
         bins=bins,
         gain=cam_cfg['gain'],
         exposure=cam_cfg['exposure'],
-        resolution=max_resolution,
+        resolution= initial_resolution,
         start_pos=tuple(cam_cfg['start_pos']),
         dark_frames=cam_cfg['dark_frames'],
     )
@@ -65,6 +66,7 @@ def system_setup_and_calibration(
         ]
         origin_image = np.median(origin_frames, axis=0).astype(np.uint8)
         contours = get_contours(origin_image)
+        assert contours, "No Contours were found"
         largest_contour = get_largest_contour(contours)
         origin_pos = get_contour_origin(largest_contour)
     else:
@@ -100,7 +102,7 @@ def system_setup_and_calibration(
 
         set_roi(camera, calibrated_resolution, calibrated_start_pos, bins)
 
-        master_dark = get_master_dark(camera, fsm_cfg["dark_frames"], "fsm_master_dark.npy")
+        master_dark = get_master_dark(camera, cam_cfg["dark_frames"], "fsm_master_dark.npy")
 
     camera_stream = CameraStream(camera).start()
 
@@ -109,11 +111,13 @@ def system_setup_and_calibration(
     )
 
     initial_sample_time = 1 / camera_stream.get_update_rate()
+
     kalman_filter = setup_kalman_filter(
         delta_t=initial_sample_time,
         model_uncertainty=kf_cfg["model_uncertainty"],
         measurement_uncertainty=kf_cfg["measurement_uncertainty"],
-    )
+    ) if kf_cfg['enabled'] else None
+
 
     return (
         camera,
