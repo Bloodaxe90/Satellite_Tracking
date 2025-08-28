@@ -1,4 +1,6 @@
 import os
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -10,6 +12,7 @@ def wait(wait_message: str):
 
         if waiting.lower() == "y":
             break
+        time.sleep(0.1)
 
 
 def show_images(*args, title: str = ""):
@@ -29,7 +32,7 @@ def show_images(*args, title: str = ""):
     """
 
     num_images = len(args)  # Number of images to display
-    image_dir = os.path.join(os.path.dirname(os.getcwd()), 'resources', 'images')
+    image_dir = os.path.join(os.path.dirname(os.getcwd()), "resources", "images")
 
     assert num_images > 0, "No images provided"
 
@@ -50,13 +53,12 @@ def show_images(*args, title: str = ""):
 
         # Display grayscale images with a gray colormap and set value range 0-255
         if img.ndim == 2:
-            axes[i].imshow(img, cmap='gray', vmin=0, vmax=255)
+            axes[i].imshow(img, cmap="gray", vmin=0, vmax=255)
         else:
             axes[i].imshow(img)  # Display color images as is
 
-        axes[i].set_title(f'Image {i + 1}')
-        axes[i].axis('off')
+        axes[i].set_title(f"Image {i + 1}")
+        axes[i].axis("off")
 
     plt.tight_layout()
     plt.show()
-

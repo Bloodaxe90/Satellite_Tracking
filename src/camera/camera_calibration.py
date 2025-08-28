@@ -1,31 +1,9 @@
 import os
 import time
-
-import cv2
 import numpy as np
 import zwoasi as asi
 
-from src.camera.camera_stream import CameraStream
-
-
-def set_colour(camera: asi.Camera, colour: bool):
-    """
-    Sets the camera's image type based on whether it supports colour and whether colour is requested
-
-    Parameters:
-        camera (asi.Camera): The camera object to configure
-        colour (bool): True if colour output is desired, False for grayscale
-
-    If the camera supports colour and colour is requested, the image type is set to RGB
-    If the camera does not support colour but colour is requested, a warning is printed
-    In all other cases, the image type is set to RAW8 (grayscale)
-    """
-    if camera.get_camera_property()["IsColorCam"] and colour:
-        camera.set_image_type(asi.ASI_IMG_RGB24)
-    else:
-        if colour:
-            print("Camera does not have colour capabilities")
-        camera.set_image_type(asi.ASI_IMG_RAW8)
+from src.utils.general import wait
 
 
 def reset_settings(camera: asi.Camera):
@@ -37,27 +15,27 @@ def reset_settings(camera: asi.Camera):
 
     If a control supports auto mode, it is first disabled before resetting the value
     """
+
+    print("Resetting Camera setting to default")
     controls = camera.get_controls()
 
     for control_key in sorted(controls.keys()):
         control = controls[control_key]
 
         # Only reset controls that can be changed
-        if control['IsWritable']:
+        if control["IsWritable"]:
             # If the control supports auto mode, disable it before resetting
-            if control['IsAutoSupported']:
-                camera.set_control_value(control['ControlType'], 0, auto=False)
+            if control["IsAutoSupported"]:
+                camera.set_control_value(control["ControlType"], 0, auto=False)
 
-            camera.set_control_value(control['ControlType'],
-                                     control['DefaultValue'])
+            camera.set_control_value(control["ControlType"], control["DefaultValue"])
 
     print("Settings Reset to Default\n")
 
 
-def get_optimum_gain_exposure(camera: asi.Camera,
-                              sleep_interval: int = 0.1,
-                              minimum_matches: int = 10
-                              ) -> tuple[int, int]:
+def get_optimum_gain_exposure(
+    camera: asi.Camera, sleep_interval: int = 0.1, minimum_matches: int = 10
+) -> tuple[int, int]:
     """
     Automatically finds and returns stable gain and exposure settings for the camera
 
@@ -71,17 +49,11 @@ def get_optimum_gain_exposure(camera: asi.Camera,
         tuple[int, int]: A tuple containing the final stable gain and exposure values
     """
 
+    print("Fetching optimal gain and exposure values")
+
     # Enable auto mode for gain and exposure so the camera can adjust them
-    camera.set_control_value(
-        control_type=asi.ASI_GAIN,
-        value=0,
-        auto=True
-    )
-    camera.set_control_value(
-        control_type=asi.ASI_EXPOSURE,
-        value=0,
-        auto=True
-    )
+    camera.set_control_value(control_type=asi.ASI_GAIN, value=0, auto=True)
+    camera.set_control_value(control_type=asi.ASI_EXPOSURE, value=0, auto=True)
 
     old_gain = None
     old_exposure = None
@@ -106,7 +78,7 @@ def get_optimum_gain_exposure(camera: asi.Camera,
 
         # If values have stayed the same for enough checks, stop
         if matches >= minimum_matches:
-            print("Gain and Exposure have stabilized")
+            print("Gain and Exposure have stabilized\n")
             break
 
         old_gain = new_gain
@@ -117,10 +89,7 @@ def get_optimum_gain_exposure(camera: asi.Camera,
     return new_gain, new_exposure
 
 
-def set_roi(camera: asi.Camera,
-            resolution: tuple,
-            start_pos: tuple,
-            bins: int ):
+def set_roi(camera: asi.Camera, resolution: tuple, start_pos: tuple, bins: int):
     """
     Sets the Region of Interest (ROI) for the camera
 
@@ -133,26 +102,32 @@ def set_roi(camera: asi.Camera,
     The function sets the ROI and prints out the actual settings after applying them
     """
 
+    print("Setting camera ROI")
     assert bins >= 1, "Bin size must be a positive integer"
 
     # Set the ROI using the given start position and resolution and adjust for binning
-    camera.set_roi(start_x=start_pos[0],
-                   start_y=start_pos[1],
-                   width=int(resolution[0] / bins),
-                   height=int(resolution[1] / bins),
-                   bins=bins)
+    camera.set_roi(
+        start_x=start_pos[0],
+        start_y=start_pos[1],
+        width=resolution[0],
+        height=resolution[1],
+        bins=bins,
+    )
 
     start_x, start_y, width, height = camera.get_roi()
 
-    print(f"ROI Set:\n"
-          f"    Start X: {start_x}\n"
-          f"    Start Y: {start_y}\n"
-          f"    Resolution: {width}x{height}\n"
-          f"    Bins: {bins}\n")
+    print(
+        f"ROI Set:\n"
+        f"    Start X: {start_x}\n"
+        f"    Start Y: {start_y}\n"
+        f"    Resolution: {width}x{height}\n"
+        f"    Bins: {bins}\n"
+    )
 
 
-
-def get_master_dark(camera: asi.Camera, num_frames: int) -> np.ndarray:
+def get_master_dark(
+    camera: asi.Camera, num_frames: int, file_name: str = "master_dark.npy"
+) -> np.ndarray:
     """
     Returns the master dark frame either by loading an existing file or creating a new one
 
@@ -166,19 +141,18 @@ def get_master_dark(camera: asi.Camera, num_frames: int) -> np.ndarray:
     Note:
         This function prompts the user to ensure the lens cap is on during dark frame capture
     """
+    print("Getting master dark")
+
     # Path to save/load the master dark frame
     file_path = os.path.join(
-        os.path.dirname(os.getcwd()),
-        'resources',
-        'dark_frame',
-        'master_dark.npy'
+        os.path.dirname(os.getcwd()), "resources", "dark_frame", file_name
     )
 
     # Make sure we are capturing at least one frame
     assert num_frames > 0, f"Must have at least 1 dark frame, not {num_frames}"
 
     len_cap: str = input(
-        "\nCreate new dark frame?\n"
+        f"Create new dark frame for {file_name}?\n"
         "A new dark frame is necessary if camera settings have changed\n\n"
         "Y/n? "
     ).lower()
@@ -187,21 +161,22 @@ def get_master_dark(camera: asi.Camera, num_frames: int) -> np.ndarray:
         print("Creating new master dark")
         dark_frames = [camera.capture() for _ in range(num_frames)]
 
-        assert dark_frames, "No dark frames were captured, ensure camera is properly connected"
+        assert (
+            dark_frames
+        ), "No dark frames were captured, ensure camera is properly connected"
 
         # Take the median of all frames to reduce noise and get a clean dark frame
         master_dark = np.median(dark_frames, axis=0).astype(np.uint8)
 
-        np.save(
-            file_path,
-            master_dark
-        )
-        print("New Master Dark created and saved\n")
+        np.save(file_path, master_dark)
+        wait("New Master Dark created and saved, have you remove the lens cap?")
+
     else:
         master_dark = np.load(file_path)
         print("Master Dark loaded\n")
 
     return master_dark
+
 
 def print_controls(camera: asi.Camera):
     """
@@ -210,15 +185,15 @@ def print_controls(camera: asi.Camera):
     Parameters:
         camera (asi.Camera): The camera to print controls of
     """
+    print("Controls")
     controls = camera.get_controls()
     for control_key in sorted(controls.keys()):
         print(f"    {control_key}")
         for property_key in sorted(controls[control_key].keys()):
             print(f"      - {property_key} {repr(controls[control_key][property_key])}")
 
-def set_gain_exposure(camera: asi.Camera,
-                      gain: int,
-                      exposure: int):
+
+def set_gain_exposure(camera: asi.Camera, gain: int, exposure: int):
     """
     Sets the gain and exposure settings for the camera
 
@@ -234,7 +209,7 @@ def set_gain_exposure(camera: asi.Camera,
         "Auto Calibrate Gain and Exposure?\n"
         "This will let the camera pick the Gain and Exposure values for you,\n"
         "overriding any values provided.\n\n"
-        "Y/n?\n"
+        "Y/n? "
     ).lower()
 
     if auto_calibrate == "y" or auto_calibrate == "yes":

@@ -1,7 +1,7 @@
 import matplotlib
 from matplotlib.lines import Line2D
 
-matplotlib.use('QtAgg')
+matplotlib.use("QtAgg")
 import matplotlib.pyplot as plt
 from collections import deque
 
@@ -10,15 +10,18 @@ class LivePlotter:
     """
     A real time plotter
     """
-    def __init__(self,
-                 root_dir: str,
-                 y_fields: tuple[tuple[str, str]],
-                 plot_name: str,
-                 plot_size: int,
-                 x_label: str,
-                 y_label: str,
-                 title: str,
-                 flip_axis: bool = False):
+
+    def __init__(
+        self,
+        root_dir: str,
+        y_fields: tuple,
+        plot_name: str,
+        plot_size: int,
+        x_label: str,
+        y_label: str,
+        title: str,
+        flip_axis: bool = False,
+    ):
         """
         Initializes the LivePlotter and sets up the interactive plot window
 
@@ -44,8 +47,10 @@ class LivePlotter:
         self.ax.grid(True)
 
         # Create line for each y field
-        self.lines: list[Line2D] = [self.ax.plot([], [], line_style, label=label)[0]
-                                    for line_style, label in y_fields]
+        self.lines: list[Line2D] = [
+            self.ax.plot([], [], line_style, label=label)[0]
+            for line_style, label in y_fields
+        ]
 
         self.ax.legend()
 
@@ -86,7 +91,7 @@ class LivePlotter:
         Saves the final plot and closes the figure window
         """
         self.fig.savefig(f"{self.save_dir}/{self.plot_name}", dpi=300)
-        print(f"\nSaved final plot to {self.save_dir}")
+        print(f"Saved final plot to {self.save_dir}")
         plt.ioff()
         plt.close(self.fig)
-        print("Plot window closed")
+        print("Plot window closed\n")

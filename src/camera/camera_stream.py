@@ -22,7 +22,9 @@ class CameraStream:
         self.camera = camera
         self.latest_frame = None  # Store the latest frame
         self.lock = threading.Lock()
-        self.capture_time_buffer = deque(maxlen=6)  # Stores frame capture times to later compute FPS
+        self.capture_time_buffer = deque(
+            maxlen=6
+        )  # Stores frame capture times to later compute FPS
         self.update_thread = threading.Thread(target=self.update_loop, daemon=True)
         self.stopped = False
 
@@ -46,31 +48,38 @@ class CameraStream:
             frame = self.camera.capture_video_frame()
             with self.lock:
                 self.latest_frame = frame
-                self.capture_time_buffer.append(time.time())  # Record current time for later FPS calculation
+                self.capture_time_buffer.append(
+                    time.time()
+                )  # Record current time for later FPS calculation
 
         # When stopping, end the camera video capture
         self.camera.stop_video_capture()
-        print("Camera stream thread stopped")
+        print("Camera stream thread stopped\n")
 
-    def get_fps(self) -> float:
+    def get_update_rate(self) -> float:
         """
-        Computes and returns the approximate FPS from the timestamps buffer.
+        Computes and returns the approximate rate at which the latest frame is updated from the timestamps buffer.
 
         Returns:
-            float: Estimated frames per second.
+            float: Estimated update rate second.
         """
         with self.lock:
             if len(self.capture_time_buffer) < 2:
-                print("Buffer is not full enough to compute FPS")
+                print("Buffer is not full enough to compute update rate\n")
                 return 0.0
 
-            time_elapsed: float = self.capture_time_buffer[1] - self.capture_time_buffer[0]
+            time_elapsed: float = (
+                self.capture_time_buffer[1] - self.capture_time_buffer[0]
+            )
 
             if time_elapsed != 0:
                 return (len(self.capture_time_buffer) - 1) / time_elapsed
             else:
-                print("Cannot divide by 0. (time elapsed is 0)")
+                print("Cannot divide by 0 (time elapsed is 0)\n")
                 return 0.0
+
+    def get_dropped_frames(self) -> int:
+        return self.camera.get_dropped_frames()
 
     def read(self) -> np.ndarray:
         """
@@ -86,6 +95,6 @@ class CameraStream:
         """
         Stops the camera stream and waits for the background thread to finish
         """
-        print("Stopping camera stream thread")
+        print("Stopping camera stream thread\n")
         self.stopped = True
         self.update_thread.join()

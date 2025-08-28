@@ -1,18 +1,12 @@
-import os
 from typing import Sequence
-
 import cv2
 import numpy as np
-import zwoasi as asi
 from cv2 import Mat
-from jedi.settings import dynamic_params
-from matplotlib import pyplot as plt
 
-from src.utils.general import show_images
 
-def get_clean_frame(light_frame: np.ndarray,
-                    master_dark: np.ndarray,
-                    kernel_size: int = 3) -> np.ndarray:
+def get_clean_frame(
+    light_frame: np.ndarray, master_dark: np.ndarray, kernel_size: int = 3
+) -> np.ndarray:
     """
     Removes noise from raw light frame by subtracting dark frame and other methods
 
@@ -32,23 +26,6 @@ def get_clean_frame(light_frame: np.ndarray,
     return clean_frame
 
 
-def get_redness_frame(light_frame: np.ndarray) -> np.ndarray:
-    """
-    Calculates the redness of an image by subtracting the maximum of blue and green channels from red
-
-    Parameters:
-        light_frame (np.ndarray): A colour image in BGR format
-
-    Returns:
-        np.ndarray: A grayscale image showing where red is strongest
-    """
-    # Split the image into its BGR colour channels
-    b, g, r = cv2.split(light_frame)
-
-    # Subtract the strongest of blue or green from red to isolate redness
-    return cv2.subtract(r, cv2.max(b, g))
-
-
 def get_contours(image: np.ndarray) -> Sequence[Mat | np.ndarray]:
     """
     Finds and returns the contours in a single channel image
@@ -64,7 +41,7 @@ def get_contours(image: np.ndarray) -> Sequence[Mat | np.ndarray]:
         src=image,
         thresh=69,  # This value is ignored because Otsus method is used
         maxval=255,
-        type=cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        type=cv2.THRESH_BINARY + cv2.THRESH_OTSU,
     )
     # Find external contours in the binary mask
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -89,8 +66,8 @@ def get_contour_origin(contour: Mat | np.ndarray) -> tuple[float, float]:
     # Make sure the area is not zero to avoid division errors
     assert largest_contour_area > 0, "Cannot find any contours"
 
-    x = M["m10"] // largest_contour_area # M["m10"] is sum of x coordinates
-    y = M["m01"] // largest_contour_area # M["m01"] is sum of x coordinates
+    x = M["m10"] // largest_contour_area  # M["m10"] is sum of x coordinates
+    y = M["m01"] // largest_contour_area  # M["m01"] is sum of x coordinates
 
     return x, y
 
@@ -108,7 +85,64 @@ def get_largest_contour(contour: Sequence[Mat | np.ndarray]) -> Mat | np.ndarray
     return max(contour, key=cv2.contourArea)
 
 
+def get_stacked_frame(frames: list) -> np.ndarray:
+    """
+    Compute a single stacked frame from a list of frames by taking
+    the pixel median across all frames
+
+    Args:
+        frames (list): List of image frames (each as a numpy array)
+
+    Returns:
+        np.ndarray: Median stacked image frame as an 8-bit unsigned integer
+    """
+
+    stacked_frame = np.median(frames, axis=0).astype(np.uint8)
+
+    return stacked_frame
 
 
+def get_rotated_frame(frame: np.ndarray, origin_pos: tuple, angle: float) -> np.ndarray:
+    """
+    Rotates a frame around a specified origin by a given angle.
+
+    Args:
+        frame (np.ndarray): Input image to rotate
+        origin_pos (tuple): (x, y) coordinates of the rotation origin
+        angle (float): Rotation angle in degrees
+
+    Returns:
+        np.ndarray: Rotated image/frame
+    """
+
+    # Compute 2D rotation matrix for the given origin and angle
+    rotation_matrix = cv2.getRotationMatrix2D(origin_pos, angle, 1)
+
+    # Apply rotation to the frame
+    rotated_frame = cv2.warpAffine(frame, rotation_matrix, frame.shape)
+
+    return rotated_frame
 
 
+def get_mean_contour_intensity(
+    contour: Sequence[Mat | np.ndarray], frame: np.ndarray
+) -> float:
+    """
+    Calculates the mean intensity of all pixels within a given contour.
+
+    Args:
+        frame (np.ndarray): The input grayscale image
+        contour: The specific contour to get mean intensity of (laser blob)
+
+    Returns:
+        float: The mean pixel intensity of the blob, or 0.0 if the contour is invalid.
+    """
+
+    mask = np.zeros(frame.shape, dtype=np.uint8)
+
+    cv2.drawContours(mask, [contour], -1, color=255, thickness=cv2.FILLED)
+
+    mean_val_tuple = cv2.mean(frame, mask=mask)
+    mean_intensity = mean_val_tuple[0]
+
+    return mean_intensity

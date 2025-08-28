@@ -1,0 +1,9 @@
+pyserial~=3.5
+opencv-python~=4.11.0.86
+numpy~=2.2.6
+zwoasi~=0.2.0
+pandas~=2.3.1
+matplotlib~=3.10.3
+pillow~=11.3.0
+scipy~=1.15.3
+jedi~=0.19.2
