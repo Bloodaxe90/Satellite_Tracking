@@ -26,6 +26,24 @@ from src.kalman_filter.kalman_filter_setup import setup_kalman_filter
 
 
 def test():
+    """
+    Experimental test function for independent validation and debugging
+
+    This function is not part of the core tracking mechanism and is primarily used
+    for messy testing. It was originally written to:
+      - Record noise characteristics from the camera with the FSM turned off
+      - Run and retrieve results from linear tracking experiments without involving
+        the FSM
+      - Provide a quick environment to test new ideas
+
+    Notes:
+        - The function mixes setup, capture, filtering, and FSM logic in one place
+          and is intentionally unstructured
+        - Results are logged for later inspection
+        - Should not be relied on for production use; serves only for
+          testing new ideas or debugging issues
+    """
+
     # General Parameters
     ROOT_DIR = os.path.dirname(os.getcwd())
 
@@ -63,7 +81,6 @@ def test():
     FSM_LINEAR = True
     linear_amp_incr_x = 0.00005
     linear_amp_incr_y = 0.00005
-
 
     EXPERIMENT_NAME: str = (
         f"tracking_"
@@ -123,8 +140,7 @@ def test():
 
         wait("generate origin")
         origin_frames = [
-            get_clean_frame(camera.capture(), master_dark)
-            for _ in range(10)
+            get_clean_frame(camera.capture(), master_dark) for _ in range(10)
         ]
         origin_image = np.median(origin_frames, axis=0).astype(np.uint8)
         contours = get_contours(origin_image)
@@ -287,8 +303,6 @@ def test():
                 amplitude_x += linear_amp_incr_x
                 amplitude_y += linear_amp_incr_y
                 fsm.send_command(f"xy={amplitude_x};{amplitude_y}", False, False)
-
-
 
             i += 1
 

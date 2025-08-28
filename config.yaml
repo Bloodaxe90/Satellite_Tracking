@@ -1,44 +1,44 @@
-run_mode: 'tracking'
+run_mode: 'tracking' # 'tracking' for live FSM feedback or 'tuning' for tuning Kalman params
 
 camera:
-    sdk_lib_name: "libASICamera2.dylib"
-    camera_id: 0
-    bins: 2
-    gain: 120
-    exposure: 32
-    max_resolution: [8288, 5640]
-    start_pos: [0, 0]
-    dark_frames: 10
+    sdk_lib_name: "libASICamera2.dylib"   # ZWO ASI SDK library name
+    camera_id: 0                          # Which camera to use (0: first camera detected)
+    bins: 2                               # Pixel binning factor
+    gain: 120                             # Camera gain (120 is the unity gain for a binning of 2)
+    exposure: 32                          # Exposure time in micro seconds
+    max_resolution: [8288, 5640]          # Sensor’s max resolution (width, height)
+    start_pos: [0, 0]                     # Starting ROI position (x, y) on the frame
+    dark_frames: 10                       # Number of dark frames to capture for calibration
 
 fsm:
-    port: "/dev/cu.usbmodem00000000001A1"
-    baudrate: 256000
-    absolute_max_amplitude: 1.0
-    absolute_min_amplitude: -1.0
-    use_fsm_roi: False
-    generate_origin: True
+    port: "/dev/cu.usbmodem00000000001A1" # Serial port for the fast steering mirror
+    baudrate: 256000                      # Communication speed with FSM
+    absolute_max_amplitude: 1.0           # Upper limit for FSM movement
+    absolute_min_amplitude: -1.0          # Lower limit for FSM movement
+    use_fsm_roi: True                     # Whether to use the FSMs ROI
+    generate_origin: True                 # Whether to use the lasers original position as startup as the origin or the center of the frame
 
 linear_fsm:
-    enabled: False
-    amplitude_step_size: [0.00005, 0.00005]
+    enabled: False                        # If True, FSM will move linearly to simulate satellite
+    amplitude_step_size: [0.00005, 0.00005] # Step size (x, y) for linear FSM increments per iteration
 
 kalman_filter:
-    enabled: False
-    model_uncertainty: 1.0e-6
-    measurement_uncertainty: 5.0
-    learning_iterations: 200
-    insane_threshold: 5
+    enabled: False                        # If True, enables Kalman filter
+    model_uncertainty: 1.0e-6             # Process noise, how uncertain we are in our models predictions (lower means more certain)
+    measurement_uncertainty: 5.0          # Measurement noise, how uncertain we are in the measurements we feed the kalman filter (lower means more certain)
+    learning_iterations: 200              # The number of frames we treat as sane to train the kalman filter before performing strict sanity checks
+    insane_threshold: 5                   # Max consecutive insane measurements before rejecting measurements and using the kalman filters predictions
 
 tuner_params:
-    tune_iterations: 1000
-    search_iterations: 6
-    initial_model_uncertainties: [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2]
-    initial_measurement_uncertainties: [0.01, 0.1, 1.0, 10.0, 100.0]
-    model_reduction_factor: 0.8
-    measurement_reduction_factor: 0.5
-    error_weight: 2
-    sane_weight: 1
+    tune_iterations: 1000                 # How many iterations per tuning run
+    search_iterations: 6                  # How many rounds of parameter refinement
+    initial_model_uncertainties: [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2] # Initial guesses for KF process noise
+    initial_measurement_uncertainties: [0.01, 0.1, 1.0, 10.0, 100.0]      # Initial guesses for KF measurement noise
+    model_reduction_factor: 0.8           # Factor to reduce model uncertainty per tuning iteration
+    measurement_reduction_factor: 0.5     # Factor to reduce measurement uncertainty per tuning iteration
+    error_weight: 2                       # Weight of tracking error in tuning cost function
+    sane_weight: 1                        # Weight of measurement sanity rate in tuning cost function
 
 general:
-    feedback_rate: 100
-    experiment_name_prefix: "tracking_sine"
+    feedback_rate: None                   # Print status every N iterations (None = disabled)
+    experiment_name_prefix: "noise_reduction_sine_" # Prefix for saved experiment files

@@ -10,7 +10,8 @@ from src.camera.image_processing import (
     get_contours,
     get_contour_origin,
     get_largest_contour,
-    get_stacked_frame, get_mean_contour_intensity,
+    get_stacked_frame,
+    get_mean_contour_intensity,
 )
 from src.fsm.fsm import FSM
 
@@ -110,7 +111,7 @@ def get_fsm_roi_and_amplitude_bounds(
 ) -> tuple:
     """
     Determines the region of interest (ROI) and amplitude bounds for the FSM.
-    The FSM is moved incrementally along both axes until the laser dot cannot be seen
+    The FSM is moved incrementally along both axes until the laser dot cannot be seen, the intensity falls below a threshold or the distance moved per step increase above a threshold
 
     Args:
         camera (asi.Camera): camera used for capturing frames
@@ -130,10 +131,14 @@ def get_fsm_roi_and_amplitude_bounds(
             amplitudes (list[float]): Final amplitude values reached for both axes
     """
 
+    # TODO This function is not perfect and could do with some work, the ROI it finds is not square about the laser dot
+
     bounds = []
     amplitudes = []
 
-    print(f"Calibrating fsm roi and amplitude bounds (this may take some time)")
+    print(
+        f"Calibrating fsm roi and amplitude bounds (be chill this may take some time)"
+    )
 
     for idx, axis in enumerate(["x", "y"]):
         for _ in range(2):
@@ -195,9 +200,11 @@ def get_fsm_roi_and_amplitude_bounds(
                         )
 
                         # If displacement or intensity exceeds threshold then the boundary is reached
-                        if distance_moved > threshold_distance_moved or intensity < threshold_intensity:
+                        if (
+                            distance_moved > threshold_distance_moved
+                            or intensity < threshold_intensity
+                        ):
                             break
-
 
                 amplitude += amplitude_incr
                 last_position = position
@@ -255,6 +262,7 @@ def get_distance_to_camera(
 ) -> tuple[float, float]:
     """
     Estimates the distance from the camera to the fsm in both X and Y axes.
+
     The FSM is moved diagonally by an amplitude, and
     the resulting shift in the laser dot is measured. Using trig the
     displacement is converted into a distance estimate.
@@ -329,9 +337,11 @@ def get_response_time(
     master_dark: np.ndarray,
     fsm: FSM,
     amplitude_bounds: tuple,
-    measurements: int = 100,
+    measurements: int = 1000,
     max_amplitude: float = -0.01,
-    threshold: int = 5,
+    displacement_threshold: int = 5,
+    change_threshold: int = 50,
+    std_dev_factor: float = 1.5,
 ) -> float:
     """
     Measure the average response time between sending a command to the fsm and
@@ -344,32 +354,35 @@ def get_response_time(
         amplitude_bounds (tuple): The maximum and minimum amplitudes for each axis in each direction
         measurements (int, optional): Number of response time measurements to collect (default: 100)
         max_amplitude (float, optional): FSM movement amplitude (default: -0.01).
-        threshold (int, optional): Minimum pixel displacement in both axes to count as a valid movement (default: 5)
+        displacement_threshold (int, optional): Minimum pixel displacement in both axes to count as a valid movement (default: 5)
+        change_threshold (int, optional): Maximum numer of iteration the amplitude can remain unchanged before it is forced to change (default: 10)
+        std_dev_factor (float): The number of standard deviations to add to the mean response time to form a safe upper bound (default: 1.0)
 
     Returns:
         float: Average FSM response time in seconds across all measurements
     """
 
-    amplitude = max_amplitude
     last_measured_x = 0
     last_measured_y = 0
+
+    amplitude = 0
+    last_amplitude = 0
+    same_amplitude_count = 0
     first_iteration = True
     last_time = time.time()
     times = []
+
+    print("Calibrating Cameras response time to FSM (patience is key)")
 
     min_amplitude_x, max_amplitude_x, min_amplitude_y, max_amplitude_y = (
         amplitude_bounds
     )
 
-    fsm.send_command(f"xy=0;0", False, False)
-
     assert (
-        min_amplitude_x < amplitude < max_amplitude_x
-        and min_amplitude_y < amplitude < max_amplitude_y
-        and amplitude != 0
+        min_amplitude_x < max_amplitude < max_amplitude_x
+        and min_amplitude_y < max_amplitude < max_amplitude_y
+        and max_amplitude != 0
     ), f"Amplitude must be within the FSM's limits {amplitude_bounds} and not zero"
-
-    print("Calibrating Cameras response time to FSM")
 
     while len(times) < measurements:
 
@@ -393,20 +406,33 @@ def get_response_time(
         if first_iteration:
             first_iteration = False
             last_time = time.time()
+            # Change amplitude for next iteration
+            amplitude = max_amplitude if amplitude == 0 else 0
         else:
             # Calculate pixel displacement relative to last position
             delta_x = abs(measured_x - last_measured_x)
             delta_y = abs(measured_y - last_measured_y)
 
             # If laser dot moved more than threshold take note of response time
-            if delta_x > threshold and delta_y > threshold:
+            if delta_x > displacement_threshold and delta_y > displacement_threshold:
                 current_time = time.time()
                 times.append(current_time - last_time)
+
                 last_time = current_time
 
                 # Change amplitude for next iteration
                 amplitude = max_amplitude if amplitude == 0 else 0
 
+        # Prevention of an error where the amplitude gets stuck and doesn't change
+        same_amplitude_count += (
+            1 if amplitude == last_amplitude else -same_amplitude_count
+        )
+        if same_amplitude_count > change_threshold:
+            amplitude = max_amplitude if amplitude == 0 else 0
+            same_amplitude_count = 0
+            last_time = time.time()
+
+        last_amplitude = amplitude
         last_measured_x = measured_x
         last_measured_y = measured_y
 
@@ -416,5 +442,11 @@ def get_response_time(
     # Compute average response time
     avg_response_time = np.mean(times, axis=0)
 
-    print(f"Average response time {avg_response_time:.6f} seconds\n")
-    return avg_response_time
+    final_response_time = avg_response_time + (np.std(times, axis=0) * std_dev_factor)
+
+    print(
+        f"Average response time {avg_response_time:.6f} seconds\n"
+        f"Final response time {final_response_time:.6f} seconds\n"
+    )
+
+    return final_response_time

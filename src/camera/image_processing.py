@@ -123,7 +123,10 @@ def get_rotated_frame(frame: np.ndarray, origin_pos: tuple, angle: float) -> np.
 
     return rotated_frame
 
-def get_mean_contour_intensity(contour: Sequence[Mat | np.ndarray], frame: np.ndarray) -> float:
+
+def get_mean_contour_intensity(
+    contour: Sequence[Mat | np.ndarray], frame: np.ndarray
+) -> float:
     """
     Calculates the mean intensity of all pixels within a given contour.
 
