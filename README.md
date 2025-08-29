@@ -1,8 +1,8 @@
 <h1 align="center">Satelite Tracking</h1>
 
 <h2>Description:</h2>
-
 <p>
+  
 </p>
 
 <h2>Setup:</h2>
@@ -40,12 +40,46 @@
     <li>Edit the input parameters in the <code>config.yaml</code> file</li>
     <li>Run <code>main.py</code> to either tune the kalman filter or start tracking.</li>
   </ol>  
+  <b>Model:</b>
+  
+  <div style="display: flex; justify-content: space-around; align-items: center;">
+    <img width="42%" alt="image" src="https://github.com/user-attachments/assets/0e07f7a0-8345-44b4-8b4e-0538e31a8ccd" />
+    <img width="48%" alt="image" src="https://github.com/user-attachments/assets/11cfd4fe-7222-4ce4-9943-d40618789b47" />
+  </div>
+
+
 
 <h2>Results:</h2>
 
 <p>
   All raw result csv files can be found in the 'results' directory
 </p>
+<p>
+  <b>Image noise reduction:</b>
+
+  The below images show the following:
+  <ul>
+    <li>Left: Raw frame</li>
+    <li>Middle: Raw frame with dark frame subtraction applied</li>
+    <li>Right: Raw frame with dark frame subtraction and morphological opening applied</li>
+  </ul>
+
+  <img width="1101" height="320" alt="image" src="https://github.com/user-attachments/assets/c764d708-3679-44e9-9f8a-3926cff53792" />
+</p>
+
+<p>
+  <b>Identifying laser position:</b>
+
+  The below images show the following:
+  <ol>
+    <li>Image 1: Clean frame (image 1)</li>
+    <li>Image 2: Clean frame with contours outlined</li>
+    <li>Image 3: Clean frame with largest contour outlined and its center pin pointed </li>
+  </ol>
+  
+  <img width="1428" height="352" alt="image" src="https://github.com/user-attachments/assets/a3916388-4a81-497e-8e90-a6e29302c978" />
+</p>
+
 <p>
   <b>Finding the minimum laser power at which the laser could be identified:</b>
   <ul>
@@ -81,13 +115,17 @@
 
   <ul>
     <li> Minimum Power (0.0338 uW):
-      <img width="1010" height="1007" alt="clipboard2075" src="https://github.com/user-attachments/assets/21ec492d-bdf9-4c0e-af64-f46842a4fbb2" />
-      <img width="1010" height="1007" alt="clipboard1165" src="https://github.com/user-attachments/assets/6f4cff0c-63e3-4a22-8e8c-29255b97f933" />
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <img width="45%" alt="clipboard2075" src="https://github.com/user-attachments/assets/21ec492d-bdf9-4c0e-af64-f46842a4fbb2" />
+        <img width="45%" alt="clipboard1165" src="https://github.com/user-attachments/assets/6f4cff0c-63e3-4a22-8e8c-29255b97f933" />
+      </div>
     </li>
     <li> Baseline Visible Power (5.55 uW):
       <br>The anomalies are caused by the surge in power when turning the laser back on, this effect is only an issue when the input power is high</br>
-      <img width="1010" height="1007" alt="clipboard50" src="https://github.com/user-attachments/assets/813397b4-44dd-4ec6-b35d-819161326217" />
-      <img width="1010" height="1007" alt="clipboard156" src="https://github.com/user-attachments/assets/12abedaa-f247-4120-a219-16ac6c75d571" />
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <img width="45%" alt="clipboard50" src="https://github.com/user-attachments/assets/813397b4-44dd-4ec6-b35d-819161326217" />
+        <img width="45%" alt="clipboard156" src="https://github.com/user-attachments/assets/12abedaa-f247-4120-a219-16ac6c75d571" />
+      </div>
     </li>
   </ul>
 </p>
@@ -102,12 +140,27 @@ For the distrebution plots the initial settling down of the tracking is ignored
 
   <ul>
     <li> Minimum Power (0.0338 uW):
-      <img width="1002" height="1007" alt="clipboard2412" src="https://github.com/user-attachments/assets/315ad948-0fdc-48dd-a8ea-f677f30d4db1" />
-      <img width="1388" height="1377" alt="clipboard2354" src="https://github.com/user-attachments/assets/a469d13b-30c6-4d73-8141-11e6239a29ba" />
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <img width="45%" alt="clipboard2412" src="https://github.com/user-attachments/assets/315ad948-0fdc-48dd-a8ea-f677f30d4db1" />
+        <img width="45%" alt="clipboard2354" src="https://github.com/user-attachments/assets/a469d13b-30c6-4d73-8141-11e6239a29ba" />
+      </div>
     </li>
     <li> Baseline Visible Power (5.55 uW):
-      <img width="1002" height="1007" alt="clipboard904" src="https://github.com/user-attachments/assets/98be8a8e-5a0c-4f81-a3a5-5032cdea626b" />
-      <img width="1389" height="1377" alt="clipboard1225" src="https://github.com/user-attachments/assets/b58dba47-95eb-4e4a-9473-a034a9caff2d" />
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <img width="45%" alt="clipboard904" src="https://github.com/user-attachments/assets/98be8a8e-5a0c-4f81-a3a5-5032cdea626b" />
+        <img width="45%" alt="clipboard1225" src="https://github.com/user-attachments/assets/b58dba47-95eb-4e4a-9473-a034a9caff2d" />
+      </div>
     </li>
   </ul>
 </p>
+
+<h2>Additional Notes:</h2>
+<ul>
+  <li>
+    The Optotune FSM takes in an Amplitude between 1.0 and -1.0 as input to move rather than an angle, to convert between angle and amplitude for this FSM the following is provided in the manual: 
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="27%" alt="image" src="https://github.com/user-attachments/assets/be2a6242-05cc-47bd-aa23-790d8cace5e9" />
+      <img width="63%" alt="image" src="https://github.com/user-attachments/assets/401cff59-259e-460d-9b85-03c7b19b0fe0" />
+    </div>
+  </li>
+</ul>
