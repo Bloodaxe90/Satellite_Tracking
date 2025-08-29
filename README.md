@@ -5,8 +5,8 @@
 <p>
 </p>
 
-<h2>Usage:</h2>
-  <b>Camera Setup</b>:
+<h2>Setup:</h2>
+  <b>Camera</b>:
   <ol>
     <li>Visit www.zwoastro.com/software</li>
     <li>
@@ -16,7 +16,7 @@
     <li>Locate and download the ASI Camera SDK from develop tools</li>
     <li>Interface with the SDK using the ZWOASI Python library available here https://github.com/python-zwoasi</li>
   </ol>
-  <b>Optotune FSM Setup:</b>
+  <b>Optotune FSM:</b>
   <ol>
     <li>Check computer sees the input device. i.e. ls /dev/cu.* (mac terminal)</li>
     <li>Connect Fast Steering Mirror to controller</li>
@@ -33,14 +33,81 @@
     <li>Send ‘start’ to check the fsm is connected, OK should be returned</li>
     <li>Refer to optotune_fsm_manual found in the hardware_manuals folder in this shared drive for more information</li>
   </ol>
-  <b>Code Setup:</b>
+  <b>Code:</b>
   <ol>
     <li>Activate a virtual environment.</li>
     <li>Run <code>pip install -r requirements.txt</code> to install the dependencies.</li>
+    <li>Edit the input parameters in the <code>config.yaml</code> file</li>
     <li>Run <code>main.py</code> to either tune the kalman filter or start tracking.</li>
   </ol>  
 
-  <h2>Program Overview</h2>
+<h2>Results:</h2>
 
-  <h3>lazer_tracking.py</h3>
+<p>
+  All raw result csv files can be found in the 'results' directory
+</p>
+<p>
+  <b>Finding the minimum laser power at which the laser could be identified:</b>
+  <ul>
+    <li>
+      For each laser power I measured the area, mean intensity and standerd deviation intensity. I also decided to see how well the laser could reproduce some input noise (a square wave with a frequency of 1 Hz), to do this I calculated the dominant frequency of the FFT of the pixels position over time. The frequency error plotted against laser power can also be seen below.
+      <img width="1389" height="990" alt="clipboard706" src="https://github.com/user-attachments/assets/980676aa-693e-42d9-99af-b96c717495d4" />
+    </li>
+    <li>
+      Since the mean intensity and standard deviation of the detected laser depend on the beam profiles measured area (as higher laser intensity causes the profile to “bloom” and include more of the faint halo), these raw metrics become misleading: the mean is artificially lowered, and the standard deviation inflated.
+      <p>
+        To remove this area dependency, two normalized quantities were introduced and plotted against the laser current:
+        <ul>
+          <li>
+            Total Flux (Mean Intensity × Area): Provides a true measure of the total captured light energy, independent of blob size.
+          </li>
+          <li>
+            Coefficient of Variation (CV = Standard Deviation / Mean): Quantifies the relative variability of pixel intensities, offering a measure of beam uniformity independent of brightness and area.
+          </li>
+        </ul>
+      <img width="1390" height="490" alt="clipboard1441" src="https://github.com/user-attachments/assets/8a06ef88-2cf0-46d5-8f04-d57945c9c7db" />
+      </p>
+    </li>
+  </ul>
+</p>
 
+<p>
+  <b>Tracking the laser:</b> 
+  <br>
+  Here the fsm was used to move the laser beam at a constant velocity across the frame to simulate the satelites movement, occastionally the beam was turned off to simulate some obstruction (i.e. a cloud passing overhead) to allow the Kalman Filter to kick in and estimate the following consecutive locations of the laser (satelite)
+  </br>
+
+  Below are the results for the Minimum Power (0.0338 uW) and then a Baseline Visible Power (5.55 uW) initially showing the X position plotted against the Y positions and then the X and Y position both individually plotted against time all for both the estimated (Kalman Filter ON) and measured (Kalman Filter OFF) values.
+
+  <ul>
+    <li> Minimum Power (0.0338 uW):
+      <img width="1010" height="1007" alt="clipboard2075" src="https://github.com/user-attachments/assets/21ec492d-bdf9-4c0e-af64-f46842a4fbb2" />
+      <img width="1010" height="1007" alt="clipboard1165" src="https://github.com/user-attachments/assets/6f4cff0c-63e3-4a22-8e8c-29255b97f933" />
+    </li>
+    <li> Baseline Visible Power (5.55 uW):
+      <br>The anomalies are caused by the surge in power when turning the laser back on, this effect is only an issue when the input power is high</br>
+      <img width="1010" height="1007" alt="clipboard50" src="https://github.com/user-attachments/assets/813397b4-44dd-4ec6-b35d-819161326217" />
+      <img width="1010" height="1007" alt="clipboard156" src="https://github.com/user-attachments/assets/12abedaa-f247-4120-a219-16ac6c75d571" />
+    </li>
+  </ul>
+</p>
+
+<p>
+  <b>Noise Reduction:</b>
+  <br>Here the Fast Steering Mirror (FSM) was used to correct sinosoidal noise with a frequency of 0.1 Hz and an amplitude of 2 Vpp</br>
+  
+  Below are the results for the Minimum Power (0.0338 uW) and then a Baseline Visible Power (5.55 uW) intially showing the pixel displacement from the origin for each axis and then distrebution of the error from the origin for each axis all for with and withought FSM turned on
+
+For the distrebution plots the initial settling down of the tracking is ignored
+
+  <ul>
+    <li> Minimum Power (0.0338 uW):
+      <img width="1002" height="1007" alt="clipboard2412" src="https://github.com/user-attachments/assets/315ad948-0fdc-48dd-a8ea-f677f30d4db1" />
+      <img width="1388" height="1377" alt="clipboard2354" src="https://github.com/user-attachments/assets/a469d13b-30c6-4d73-8141-11e6239a29ba" />
+    </li>
+    <li> Baseline Visible Power (5.55 uW):
+      <img width="1002" height="1007" alt="clipboard904" src="https://github.com/user-attachments/assets/98be8a8e-5a0c-4f81-a3a5-5032cdea626b" />
+      <img width="1389" height="1377" alt="clipboard1225" src="https://github.com/user-attachments/assets/b58dba47-95eb-4e4a-9473-a034a9caff2d" />
+    </li>
+  </ul>
+</p>
