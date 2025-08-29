@@ -40,6 +40,21 @@ def system_setup_and_calibration(
     """
     Performs full system setup and calibration
 
+    Program Flow:
+    1. Set up the Camera and calculate master dark
+    2. Set up the FSM
+    3. Calculate the origin position:
+        If `generate_origin` is enabled compute the origin as the lasers current position
+        Else use the center of the image as the origin
+    4. Calibrate distance between the FSM and the Camera
+    5. If FSM ROI is enabled:
+        - Calibrate ROI and amplitude bounds
+        - Update camera ROI and master dark frame
+        - Adjust the origin
+    6. Start the camera stream
+    7. Calibrate Cameras response time to changes in the FSM
+    8. If Kalman filter is enabled set it up Else set it to None
+
     Args:
         config (dict): Initial configuration of input parameters
         root_dir (str): Root directory of the project
