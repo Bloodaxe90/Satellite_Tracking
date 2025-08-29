@@ -46,7 +46,8 @@ def lazer_tracking(
         Else use the actual measurements
     4. Compute positional error relative to the origin
     5. Send corrective commands to the FSM at a calibrated rate
-    6. Record measurements, estimates, and errors into a results DataFrame
+    6. If linear fsm is enabled send commands to move the FSM linearly
+    7. Record measurements, estimates, and errors into a results DataFrame
 
     Args:
         config (dict): Initial configuration of input parameters
