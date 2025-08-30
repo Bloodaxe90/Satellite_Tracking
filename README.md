@@ -5,6 +5,24 @@
 This repository holds the foundational code for a satellite tracking and beam stabilization system.
 </p>
 
+<h3>Features</h3>
+<ul>
+  <li>Hardware control with ZWO ASI cameras and Optotune FSM controllers</li>
+  <li>Fast Steering Mirror (FSM) noise reduction</li>
+  <li>Constant-velocity Kalman Filter tracking</li>
+  <li>Kalman Filter parameter tuning</li>
+  <li>System setup and calibration tools</li>
+  <li>FFT-based noise frequency identification</li>
+</ul>
+
+<h3>Status</h3>
+<p>
+  The program includes a tracking and noise reduction loop, but it has not yet been fully tested or tuned.  
+  At this stage, the loop represents my initial design of how tracking and noise reduction could operate together.  
+  To allow for flexibility, the Kalman Filter can be toggled on or off so that noise reduction can be evaluated independently of tracking.  
+  The FFT-based noise frequency identification is not yet integrated into the loop, but the core code for this functionality is already implemented.
+</p>
+
 <h2>Setup:</h2>
   <b>Camera</b>:
   <ol>
@@ -55,7 +73,7 @@ This repository holds the foundational code for a satellite tracking and beam st
   All raw result CSV files can be found in the <code>results</code> directory.
 </p>
 <p>
-  <b>Image noise reduction:</b>
+  <h3>Image noise reduction:</h3>
 
   The images below show the following:
   <ul>
@@ -68,7 +86,7 @@ This repository holds the foundational code for a satellite tracking and beam st
 </p>
 
 <p>
-  <b>Identifying laser position:</b>
+  <h3>Identifying laser position:</h3>
 
   The images below show the following:
   <ol>
@@ -81,7 +99,7 @@ This repository holds the foundational code for a satellite tracking and beam st
 </p>
 
 <p>
-  <b>Finding the minimum laser power at which the laser could be identified:</b>
+  <h3>Finding the minimum laser power at which the laser could be identified:</h3>
   <ul>
     <li>
       For each laser power I measured the area, mean intensity, and standard deviation intensity. I also evaluated how well the laser could reproduce input noise (a square wave with a frequency of 1 Hz). To do this, I calculated the dominant frequency of the FFT of the pixel position over time. The frequency error plotted against laser power can also be seen below.
@@ -106,10 +124,8 @@ This repository holds the foundational code for a satellite tracking and beam st
 </p>
 
 <p>
-  <b>Tracking the laser:</b> 
-  <br>
+  <h3>Tracking the laser:</h3> 
   Here the FSM was used to move the laser beam at a constant velocity across the frame to simulate satellite movement. Occasionally the beam was turned off to simulate an obstruction (e.g. a cloud passing overhead), allowing the Kalman Filter to estimate the subsequent positions of the laser (satellite).
-  </br>
 
   Below are the results for the Minimum Power (0.0338 µW) and then a Baseline Visible Power (5.55 µW). These initially show the X position plotted against the Y position, and then the X and Y positions individually plotted against time, all for both the estimated (Kalman Filter ON) and measured (Kalman Filter OFF) values.
 
@@ -131,8 +147,8 @@ This repository holds the foundational code for a satellite tracking and beam st
 </p>
 
 <p>
-  <b>Noise Reduction:</b>
-  <br>Here the Fast Steering Mirror (FSM) was used to correct sinusoidal noise with a frequency of 0.1 Hz and an amplitude of 2 Vpp.</br>
+  <h3>Noise Reduction:</h3>
+  Here the Fast Steering Mirror (FSM) was used to correct sinusoidal noise with a frequency of 0.1 Hz and an amplitude of 2 Vpp.
   
   Below are the results for the Minimum Power (0.0338 µW) and then a Baseline Visible Power (5.55 µW). These initially show the pixel displacement from the origin for each axis, and then the distribution of the error from the origin for each axis, both with and without the FSM turned on.
 
