@@ -49,7 +49,7 @@ This repository holds the foundational code for a satellite tracking and beam st
     </li>
     <li>Make sure “Local echo” is enabled and “Enter Key Emulation” is set to CR + LF</li>
     <li>Send ‘start’ to check the FSM is connected; <code>OK</code> should be returned</li>
-    <li>Refer to <code>optotune_fsm_manual</code> found in the <code>hardware_manuals</code> folder in this shared drive for more information</li>
+    <li>Refer to <code>optotune_fsm_manual</code> found in the <code>resources/hardware_manuals</code> directory for more information</li>
   </ol>
   <h3>Code:</h3>
   <ol>
