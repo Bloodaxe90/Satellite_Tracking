@@ -24,7 +24,7 @@ This repository holds the foundational code for a satellite tracking and beam st
 </p>
 
 <h2>Setup:</h2>
-  <b>Camera</b>:
+  <h3>Camera:</h3>
   <ol>
     <li>Visit www.zwoastro.com/software</li>
     <li>
@@ -34,7 +34,7 @@ This repository holds the foundational code for a satellite tracking and beam st
     <li>Locate and download the ASI Camera SDK from the developer tools</li>
     <li>Interface with the SDK using the ZWOASI Python library available here: https://github.com/python-zwoasi</li>
   </ol>
-  <b>Optotune FSM:</b>
+  <h3>Optotune FSM:</h3>
   <ol>
     <li>Check the computer detects the input device, e.g. <code>ls /dev/cu.*</code> (Mac terminal)</li>
     <li>Connect the Fast Steering Mirror to the controller</li>
@@ -51,14 +51,14 @@ This repository holds the foundational code for a satellite tracking and beam st
     <li>Send ‘start’ to check the FSM is connected; <code>OK</code> should be returned</li>
     <li>Refer to <code>optotune_fsm_manual</code> found in the <code>hardware_manuals</code> folder in this shared drive for more information</li>
   </ol>
-  <b>Code:</b>
+  <h3>Code:</h3>
   <ol>
     <li>Activate a virtual environment.</li>
     <li>Run <code>pip install -r requirements.txt</code> to install the dependencies.</li>
     <li>Edit the input parameters in the <code>config.yaml</code> file</li>
     <li>Run <code>main.py</code> to either tune the Kalman filter or start tracking.</li>
   </ol>  
-  <b>Model:</b>
+  <h3>Model:</h3>
   
   <div style="display: flex; justify-content: space-around; align-items: center;">
     <img width="42%" alt="image" src="https://github.com/user-attachments/assets/0e07f7a0-8345-44b4-8b4e-0538e31a8ccd" />
