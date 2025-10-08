@@ -7,6 +7,7 @@ from src.kalman_filter.kalman_filter_calibration import set_transition_matrix
 def setup_kalman_filter(
     delta_t: float,
     model_uncertainty: float = 0.05,
+    jerk_model_uncertainty: float = 1e-6,
     measurement_uncertainty: float = 0.5,
 ) -> cv2.KalmanFilter:
     """
@@ -15,6 +16,7 @@ def setup_kalman_filter(
     Parameters:
         delta_t (float): The time between each transition
         model_uncertainty (float): How much uncertainty we have in the model accurately predicting the next position (default is 0.05) (higher value = less certain)
+        jerk_model_uncertainty (float): How much uncertainty we have in the constant jerk assumption of the model
         measurement_uncertainty (float): How much uncertainty we have in our x, y position measurements representing the actual position of the laser (default is 0.5) (higher value = less certain)
 
     Returns:
@@ -54,7 +56,7 @@ def setup_kalman_filter(
     # Process Noise Covariance (Q) = Uncertainty in our model
     kalman_filter.processNoiseCov = np.eye(8, dtype=np.float32) * model_uncertainty
 
-    jerk_process_noise = 1e-6
+    jerk_process_noise = 1e-9
 
     kalman_filter.processNoiseCov[6, 6] = jerk_process_noise
     kalman_filter.processNoiseCov[7, 7] = jerk_process_noise

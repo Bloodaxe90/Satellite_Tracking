@@ -50,12 +50,14 @@ def test():
     # Kalman Filter Parameters
     # TODO need tuning
     MODEL_UNCERTAINTY = 1e-6
-    MEASUREMENT_UNCERTAINTY = 5
+    JERK_MODEL_UNCERTAINTY = 1e-9
+    MEASUREMENT_UNCERTAINTY = 30
     LEARNING_ITERATIONS_KF = 100
     INSANE_THRESHOLD = 1
 
     # testing specific parameters (Including frequency plotter)
     ITERATIONS = 1000
+    TIME = 60
     KALMAN_FILTER = True
     FSM = False
 
@@ -63,17 +65,19 @@ def test():
     FSM_LINEAR = True
     initial_amplitude_x = -0.04
     initial_amplitude_y = -0.04
-    linear_amp_incr_x = 0.00001
-    linear_amp_incr_y = 0.00001
-    amp_x_acc = 1.005
-    amp_y_acc = 1.005
+    scaling_factor = TIME / 60
+    linear_amp_incr_x = 0.00001 / scaling_factor
+    linear_amp_incr_y = 0.00001 / scaling_factor
+    amp_x_acc = 1.005 ** (1 / scaling_factor)
+    amp_y_acc = 1.005 ** (1 / scaling_factor)
     amp_x_dec = 2 - amp_x_acc
     amp_y_dec = 2 - amp_y_acc
 
 
     EXPERIMENT_NAME: str = (
-        f"ca_tracking_"
+        f"ca_tracking_freqtest_"
         f".003A_"
+        f"T{TIME}"
         f"KF{1 if KALMAN_FILTER else 0}_"
         f"G{GAIN}_"
         f"E{EXPOSURE}_"
@@ -165,6 +169,7 @@ def test():
             kalman_filter = setup_kalman_filter(
                 delta_t=initial_sample_time,
                 model_uncertainty=MODEL_UNCERTAINTY,
+                jerk_model_uncertainty= JERK_MODEL_UNCERTAINTY,
                 measurement_uncertainty=MEASUREMENT_UNCERTAINTY,
             )
 
@@ -182,7 +187,7 @@ def test():
         changed = False
 
         i = 0
-        while time.time() - start_time < 60:
+        while time.time() - start_time < TIME:
             current_time = time.time()
             sample_time = current_time - last_time
             last_time = current_time
