@@ -89,7 +89,11 @@ def test():
         f"MEU{MEASUREMENT_UNCERTAINTY}_"
     )
 
-    MODEL_UNCERTAINTY = 0.5e-6
+    MODEL_UNCERTAINTY = 100
+    MEASUREMENT_UNCERTAINTY = 100
+
+
+
     results = pd.DataFrame(
         columns=[
             "measured_X",
@@ -254,9 +258,9 @@ def test():
                     insane_count += 1
 
                 # TODO Remove later
-                if TIME * 0.5 < time.time() - start_time:
+                if TIME * 0.40 < time.time() - start_time < TIME * 0.6:
                     insane_count = 1
-                    if time.time() - start_time < TIME * 0.75:
+                    if time.time() - start_time < TIME * 0.60:
                         measured_x = None
                         measured_y = None
                 else:
