@@ -9,7 +9,7 @@ def is_sane_measurement(
     kalman_filter: cv2.KalmanFilter,
     measured_x: float,
     measured_y: float,
-    threshold: float = 100,  # Chi-squared value for p=0.01 with 2 DOF
+    threshold: float = 500,  # Chi-squared value for p=0.01 with 2 DOF
 ) -> bool | np.ndarray[tuple[int, ...], np.dtype[bool]]:
     """
     Validate whether a measurement is statistically consistent with the Kalman filter prediction.

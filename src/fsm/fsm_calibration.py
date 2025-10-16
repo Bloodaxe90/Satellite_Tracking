@@ -265,7 +265,7 @@ def get_distance_to_camera(
 
     print("Calibrating FSMs distance from camera")
     # Reset FSM
-    fsm.send_command("xy=0;0", print_received=False)
+    fsm.send_command("xy=-0.04;-0.04", print_received=False)
     origin_x, origin_y = origin_pos
 
     min_amplitude_x, max_amplitude_x, min_amplitude_y, max_amplitude_y = (

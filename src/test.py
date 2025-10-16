@@ -70,13 +70,13 @@ def test():
     linear_amp_incr_y = 0.00001 / scaling_factor
     amp_x_acc = 1.005 ** (1 / scaling_factor)
     amp_y_acc = 1.005 ** (1 / scaling_factor)
+    LEARNING_ITERATIONS_KF *= scaling_factor
     amp_x_dec = 2 - amp_x_acc
     amp_y_dec = 2 - amp_y_acc
 
-
     EXPERIMENT_NAME: str = (
-        f"ca_tracking_freqtest_"
-        f".003A_"
+        f"ca_tracking_large_break_"
+        f".04A_"
         f"T{TIME}"
         f"KF{1 if KALMAN_FILTER else 0}_"
         f"G{GAIN}_"
@@ -88,6 +88,8 @@ def test():
         f"MOU{MODEL_UNCERTAINTY}_"
         f"MEU{MEASUREMENT_UNCERTAINTY}_"
     )
+
+    MODEL_UNCERTAINTY = 0.5e-6
     results = pd.DataFrame(
         columns=[
             "measured_X",
@@ -194,6 +196,7 @@ def test():
             if KALMAN_FILTER:
                 set_transition_matrix(kalman_filter, sample_time)
 
+
                 kalman_filter.predict()
 
             raw_frame = camera_stream.read()
@@ -225,15 +228,15 @@ def test():
 
             if (amplitude_x > 0 or amplitude_y > 0) and not changed:
                 changed = True
-                current_state = kalman_filter.statePost
-                current_state[4, 0] *= -1  # ax_new = -ax_old
-                current_state[5, 0] *= -1  # ay_new = -ay_old
-                current_state[6, 0] *= -1  # jx_new = -jx_old
-                current_state[7, 0] *= -1  # jy_new = -jy_old
+                F = np.eye(8, dtype=np.float32)
+                F[4, 4] = -1.0  # Flip ax
+                F[5, 5] = -1.0  # Flip ay
+                F[6, 6] = -1.0  # Flip jx
+                F[7, 7] = -1.0  # Flip jy
 
-                kalman_filter.statePost = current_state
+                kalman_filter.statePost = F @ kalman_filter.statePost
 
-                kalman_filter.statePre = current_state
+                kalman_filter.errorCovPost = F @ kalman_filter.errorCovPost @ F.T
 
             new_x = measured_x
             new_y = measured_y
@@ -249,6 +252,15 @@ def test():
                     insane_count = 0
                 else:
                     insane_count += 1
+
+                # TODO Remove later
+                if TIME * 0.5 < time.time() - start_time:
+                    insane_count = 1
+                    if time.time() - start_time < TIME * 0.75:
+                        measured_x = None
+                        measured_y = None
+                else:
+                    insane_count = 0
 
                 if insane_count < INSANE_THRESHOLD:
                     if first_measurement:

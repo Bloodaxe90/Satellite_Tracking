@@ -51,17 +51,24 @@ def tuner():
 
     # Kalman Filter Tuner
     SEARCH_ITERATIONS = 3
-    INITIAL_MODEL_UNCERTAINTIES = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
-    INITIAL_MEASUREMENT_UNCERTAINTIES = [0.01, 0.1, 1.0, 10.0, 100.0]
-    NUM_MODEL_UNCERTAINIES = 5
-    NUM_MEASUREMENT_UNCERTAINIES = 5
-    MODEL_REDUCTION_FACTOR = 0.8
+    INITIAL_MODEL_UNCERTAINTIES = [1e-6]
+    INITIAL_JERK_MODEL_UNCERTAINTIES = [1e-9]
+    INITIAL_MEASUREMENT_UNCERTAINTIES = [30]
+    NUM_MODEL_UNCERTAINIES = 3
+
+    NUM_JERK_MODEL_UNCERTAINIES = 1
+
+    NUM_MEASUREMENT_UNCERTAINIES = 3
+    MODEL_REDUCTION_FACTOR = 0.5
+    JERK_MODEL_REDUCTION_FACTOR = 0.5
     MEASUREMENT_REDUCTION_FACTOR = 0.5
     ERROR_WEIGHT = 1
     SANE_WEIGHT = 0
 
     # testing specific parameters (Including frequency plotter)
     ITERATIONS = 1000
+    TIME = 60
+
     FSM = False
 
     # Linear FSM
@@ -93,6 +100,7 @@ def tuner():
     final_results = pd.DataFrame(
         columns=[
             "model_uncertainty",
+            "jerk_model_uncertainty",
             "measurement_uncertainty",
             "error_x",
             "error_y",
@@ -163,164 +171,174 @@ def tuner():
 
         model_uncertainties = INITIAL_MODEL_UNCERTAINTIES
         measurement_uncertainties = INITIAL_MEASUREMENT_UNCERTAINTIES
+        jerk_model_uncertainties = INITIAL_JERK_MODEL_UNCERTAINTIES
         for i in range(SEARCH_ITERATIONS):
 
             print(
-                f"{i + 1}. MOU {model_uncertainties}, MEU {measurement_uncertainties}"
+                f"{i + 1}. MOU {model_uncertainties}, JMU {jerk_model_uncertainties}, MEU {measurement_uncertainties}"
             )
             for model_uncertainty in model_uncertainties:
-                for measurement_uncertainty in measurement_uncertainties:
+                for jerk_model_uncertainty in jerk_model_uncertainties:
+                    for measurement_uncertainty in measurement_uncertainties:
 
-                    print(
-                        f"Tested parameters: MOU {model_uncertainty}, MEU {measurement_uncertainty}"
-                    )
-                    error_x = []
-                    error_y = []
-                    sane_measurements = []
-
-                    if FSM_LINEAR:
-                        fsm.send_command(f"xy={initial_amplitude_x};{initial_amplitude_y}", False, False)
-                        time.sleep(1)
-
-                    initial_sample_time = 1 / camera_stream.get_update_rate()
-                    kalman_filter = setup_kalman_filter(
-                        delta_t=initial_sample_time,
-                        model_uncertainty=model_uncertainty,
-                        measurement_uncertainty=measurement_uncertainty,
-                    )
-                    start_time = time.time()
-                    last_time = start_time
-                    first_measurement = True
-                    last_sleep_time = start_time
-                    amplitude_x = initial_amplitude_x
-                    amplitude_y = initial_amplitude_y
-                    changed = False
-                    for i in range(ITERATIONS):
-
-                        current_time = time.time()
-                        sample_time = current_time - last_time
-                        last_time = current_time
-                        set_transition_matrix(kalman_filter, sample_time)
-
-                        kalman_filter.predict()
-
-                        if (amplitude_x > 0 or amplitude_y > 0) and not changed:
-                            changed = True
-                            current_state = kalman_filter.statePost
-
-                            current_state[4, 0] *= -1  # ax_new = -ax_old
-                            current_state[5, 0] *= -1  # ay_new = -ay_old
-                            current_state[6, 0] *= -1  # jx_new = -jx_old
-                            current_state[7, 0] *= -1  # jy_new = -jy_old
-
-                            kalman_filter.statePost = current_state
-
-                            kalman_filter.statePre = current_state
-
-                        raw_frame = camera_stream.read()
-                        if raw_frame is None:
-                            time.sleep(0.001)
-                            continue
-
-                        clean_frame = get_clean_frame(
-                            raw_frame, master_dark, KERNEL_SIZE
+                        print(
+                            f"Tested parameters: MOU {model_uncertainty}, JMU {jerk_model_uncertainty}, MEU {measurement_uncertainty}"
                         )
-
-                        contours = get_contours(clean_frame)
-                        if not contours:
-                            break;
-
-                        largest_contour = get_largest_contour(contours)
-                        measured_x, measured_y = get_contour_origin(largest_contour)
-
-                        sane_measurement = is_sane_measurement(
-                            kalman_filter, measured_x, measured_y
-                        )
-
-                        if first_measurement:
-                            first_measurement = False
-                            kalman_filter.errorCovPost = np.eye(8,
-                                                                dtype=np.float32) * 500.0
-
-                            kalman_filter.statePost = np.array([
-                                [measured_x],  # Position x
-                                [measured_y],  # Position y
-                                [0],  # Velocity x
-                                [0],  # Velocity y
-                                [0],  # Acceleration x
-                                [0],  # Acceleration y
-                                [0],  # Jerk x
-                                [0]  # Jerk y
-                            ], dtype=np.float32)
-                        else:
-                            kalman_filter.correct(
-                                np.array([[measured_x], [measured_y]],
-                                         dtype=np.float32)
-                            )
-
-                        estimated_state = kalman_filter.statePost
-                        estimated_x = estimated_state[0, 0]
-                        estimated_y = estimated_state[1, 0]
-
-                        # print(f"M {measured_x} {measured_y}, E {estimated_x} {estimated_y}, Sane {sane_measurement}")
-
-                        delta_x = origin_x - measured_x
-                        delta_y = origin_y - measured_y
-
-                        error_x.append(abs(measured_x - estimated_x))
-                        error_y.append(abs(measured_y - estimated_y))
-                        sane_measurements.append(sane_measurement)
-
-                        # if (i + 1) % 100 == 0:
-                        #     print(f"Iteration: {i + 1}, FPS: {camera_stream.get_fps()}, Sample Rate: {(i + 1) / (time.time() -  start_time)}")
-
-                        if FSM:
-                            current_sleep_time = time.time()
-                            if current_sleep_time - last_sleep_time >= fsm_sleep_time:
-                                amplitude_x += delta_x / (
-                                    distance_x * math.tan(math.radians(50))
-                                )
-                                amplitude_y -= delta_y / (
-                                    distance_y * math.tan(math.radians(50))
-                                )
-
-                                assert (
-                                    MIN_AMPLITUDE < amplitude_x < MAX_AMPLITUDE
-                                    and MIN_AMPLITUDE < amplitude_y < MAX_AMPLITUDE
-                                ), f"Amplitude must be within the FSM's limits {amplitude_bounds}"
-                                fsm.send_command(
-                                    f"xy={amplitude_x};{amplitude_y}",
-                                    print_sent=False,
-                                    print_received=False,
-                                )
-                                last_sleep_time = current_sleep_time
+                        error_x = []
+                        error_y = []
+                        sane_measurements = []
 
                         if FSM_LINEAR:
-                            amplitude_x += linear_amp_incr_x
-                            amplitude_y += linear_amp_incr_y
-                            linear_amp_incr_x *= (
-                                amp_x_acc if amplitude_x < 0 and amplitude_y < 0 else amp_x_dec)
-                            linear_amp_incr_y *= (
-                                amp_y_acc if amplitude_x < 0 and amplitude_y < 0 else amp_y_dec)
-                            print(linear_amp_incr_x, linear_amp_incr_y,
-                                  amplitude_x, amplitude_y)
+                            fsm.send_command(f"xy={initial_amplitude_x};{initial_amplitude_y}", False, False)
+                            time.sleep(1)
 
-                            fsm.send_command(
-                                f"xy={amplitude_x};{amplitude_y}", False, False
+                        initial_sample_time = 1 / camera_stream.get_update_rate()
+                        kalman_filter = setup_kalman_filter(
+                            delta_t=initial_sample_time,
+                            model_uncertainty=model_uncertainty,
+                            jerk_model_uncertainty= jerk_model_uncertainty,
+                            measurement_uncertainty=measurement_uncertainty,
+                        )
+                        start_time = time.time()
+                        last_time = start_time
+                        first_measurement = True
+                        last_sleep_time = start_time
+                        amplitude_x = initial_amplitude_x
+                        amplitude_y = initial_amplitude_y
+                        changed = False
+                        j = 0
+                        while time.time() - start_time < TIME:
+
+                            current_time = time.time()
+                            sample_time = current_time - last_time
+                            last_time = current_time
+                            set_transition_matrix(kalman_filter, sample_time)
+
+                            kalman_filter.predict()
+
+                            if (amplitude_x > 0 or amplitude_y > 0) and not changed:
+                                changed = True
+                                current_state = kalman_filter.statePost
+                                current_state[4, 0] *= -1  # ax_new = -ax_old
+                                current_state[5, 0] *= -1  # ay_new = -ay_old
+                                current_state[6, 0] *= -1  # jx_new = -jx_old
+                                current_state[7, 0] *= -1  # jy_new = -jy_old
+
+                                kalman_filter.statePost = current_state
+
+                                kalman_filter.statePre = current_state
+
+                            raw_frame = camera_stream.read()
+                            if raw_frame is None:
+                                time.sleep(0.001)
+                                continue
+
+                            clean_frame = get_clean_frame(
+                                raw_frame, master_dark, KERNEL_SIZE
                             )
 
-                    final_results.loc[len(final_results)] = {
-                        "model_uncertainty": model_uncertainty,
-                        "measurement_uncertainty": measurement_uncertainty,
-                        "error_x": np.mean(error_x, axis=0),
-                        "error_y": np.mean(error_y, axis=0),
-                        "sane_rate": np.sum(sane_measurements) / ITERATIONS,
-                    }
+                            contours = get_contours(clean_frame)
+                            if not contours:
+                                break;
+
+                            largest_contour = get_largest_contour(contours)
+                            measured_x, measured_y = get_contour_origin(largest_contour)
+
+                            sane_measurement = is_sane_measurement(
+                                kalman_filter, measured_x, measured_y
+                            )
+
+                            if first_measurement:
+                                first_measurement = False
+                                kalman_filter.errorCovPost = np.eye(8,
+                                                                    dtype=np.float32) * 500.0
+
+                                kalman_filter.statePost = np.array([
+                                    [measured_x],  # Position x
+                                    [measured_y],  # Position y
+                                    [0],  # Velocity x
+                                    [0],  # Velocity y
+                                    [0],  # Acceleration x
+                                    [0],  # Acceleration y
+                                    [0],  # Jerk x
+                                    [0]  # Jerk y
+                                ], dtype=np.float32)
+                            else:
+                                # TODO remove later
+                                if TIME * 0.25 < time.time() - start_time < TIME * 0.75:
+                                    pass
+                                else:
+                                    kalman_filter.correct(
+                                        np.array([[measured_x], [measured_y]],
+                                                 dtype=np.float32)
+                                    )
+
+                            estimated_state = kalman_filter.statePost
+                            estimated_x = estimated_state[0, 0]
+                            estimated_y = estimated_state[1, 0]
+
+                            # print(f"M {measured_x} {measured_y}, E {estimated_x} {estimated_y}, Sane {sane_measurement}")
+
+                            delta_x = origin_x - measured_x
+                            delta_y = origin_y - measured_y
+
+                            error_x.append(abs(measured_x - estimated_x))
+                            error_y.append(abs(measured_y - estimated_y))
+                            sane_measurements.append(sane_measurement)
+
+                            # if (i + 1) % 100 == 0:
+                            #     print(f"Iteration: {i + 1}, FPS: {camera_stream.get_fps()}, Sample Rate: {(i + 1) / (time.time() -  start_time)}")
+
+                            if FSM:
+                                current_sleep_time = time.time()
+                                if current_sleep_time - last_sleep_time >= fsm_sleep_time:
+                                    amplitude_x += delta_x / (
+                                        distance_x * math.tan(math.radians(50))
+                                    )
+                                    amplitude_y -= delta_y / (
+                                        distance_y * math.tan(math.radians(50))
+                                    )
+
+                                    assert (
+                                        MIN_AMPLITUDE < amplitude_x < MAX_AMPLITUDE
+                                        and MIN_AMPLITUDE < amplitude_y < MAX_AMPLITUDE
+                                    ), f"Amplitude must be within the FSM's limits {amplitude_bounds}"
+                                    fsm.send_command(
+                                        f"xy={amplitude_x};{amplitude_y}",
+                                        print_sent=False,
+                                        print_received=False,
+                                    )
+                                    last_sleep_time = current_sleep_time
+
+                            if FSM_LINEAR:
+                                amplitude_x += linear_amp_incr_x
+                                amplitude_y += linear_amp_incr_y
+                                linear_amp_incr_x *= (
+                                    amp_x_acc if amplitude_x < 0 and amplitude_y < 0 else amp_x_dec)
+                                linear_amp_incr_y *= (
+                                    amp_y_acc if amplitude_x < 0 and amplitude_y < 0 else amp_y_dec)
+
+                                fsm.send_command(
+                                    f"xy={amplitude_x};{amplitude_y}", False, False
+                                )
+
+                            j += 1
+
+                        print(len(final_results))
+                        final_results.loc[len(final_results)] = {
+                            "model_uncertainty": model_uncertainty,
+                            "measurement_uncertainty": measurement_uncertainty,
+                            "jerk_model_uncertainty": jerk_model_uncertainty,
+                            "error_x": np.mean(error_x, axis=0),
+                            "error_y": np.mean(error_y, axis=0),
+                            "sane_rate": np.sum(sane_measurements) / j,
+                        }
+                        print(final_results)
 
             rmse = np.sqrt(
                 final_results["error_x"] ** 2 + final_results["error_y"] ** 2
             )
-            normalized_rmse = (rmse - rmse.min()) / (rmse.max() - rmse.min())
+            normalized_rmse = (rmse - rmse.min()) / (rmse.max() - rmse.min() + 1e-12)
             cost = (ERROR_WEIGHT * normalized_rmse) + (
                 SANE_WEIGHT * (1 - final_results["sane_rate"])
             )
@@ -336,6 +354,18 @@ def tuner():
             model_uncertainties = np.array([max(x, 1e-9) for x in new_space]).astype(
                 np.float32
             )
+
+            center_value = final_results["jerk_model_uncertainty"][best_index]
+            half_range = center_value * JERK_MODEL_REDUCTION_FACTOR
+            new_space = np.linspace(
+                center_value - half_range,
+                center_value + half_range,
+                NUM_JERK_MODEL_UNCERTAINIES,
+            )
+
+            jerk_model_uncertainties = np.array(
+                [max(x, 1e-9) for x in new_space]
+            ).astype(np.float32)
 
             center_value = final_results["measurement_uncertainty"][best_index]
             half_range = center_value * MEASUREMENT_REDUCTION_FACTOR
