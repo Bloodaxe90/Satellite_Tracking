@@ -10,6 +10,7 @@ This repository holds the foundational code for a satellite tracking and beam st
   <li>Hardware control with ZWO ASI cameras and Optotune FSM controllers</li>
   <li>Fast Steering Mirror (FSM) noise reduction</li>
   <li>Constant-velocity Kalman Filter tracking</li>
+  <li>Changing-acceleration Kalman Filter tracking (changing_acceleration_kf branch)</li>
   <li>Kalman Filter parameter tuning</li>
   <li>System setup and calibration tools</li>
   <li>FFT-based noise frequency identification</li>
@@ -124,7 +125,7 @@ This repository holds the foundational code for a satellite tracking and beam st
 </p>
 
 <p>
-  <h3>Tracking the laser:</h3> 
+  <h3>Tracking the laser: (Constant Velocity)</h3> 
   Here the FSM was used to move the laser beam at a constant velocity across the frame to simulate satellite movement. Occasionally the beam was turned off to simulate an obstruction (e.g. a cloud passing overhead), allowing the Kalman Filter to estimate the subsequent positions of the laser (satellite).
 
   Below are the results for the Minimum Power (0.0338 µW) and then a Baseline Visible Power (5.55 µW). These initially show the X position plotted against the Y position, and then the X and Y positions individually plotted against time, all for both the estimated (Kalman Filter ON) and measured (Kalman Filter OFF) values.
@@ -143,6 +144,44 @@ This repository holds the foundational code for a satellite tracking and beam st
         <img width="45%" alt="clipboard156" src="https://github.com/user-attachments/assets/12abedaa-f247-4120-a219-16ac6c75d571" />
       </div>
     </li>
+  </ul>
+</p>
+
+<p>
+  <h3>Tracking the laser: (Changing Acceleration)</h3> 
+  Here the FSM was used to move the laser beam at a changing acceleration accelerating (accelerating towards the center of the frame and then decelerating away it) to represent the doplar effect within the simulated satellites movement. Occasionally the beam was turned off to simulate an obstruction (e.g. a cloud passing overhead), allowing the Kalman Filter to estimate the subsequent positions of the laser (satellite), in some runs noise was also added.
+
+  Below are the results for the Minimum Power (0.0338 µW) and then a Baseline Visible Power (5.55 µW). These initially show the X position plotted against the Y position, and then the X and Y positions individually plotted against time, all for both the estimated (Kalman Filter ON) and measured (Kalman Filter OFF) values.
+
+  <ul>
+    <li> Minimum Power (0.0338 µW):
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <img width="45%" alt="clipboard8" src="https://github.com/user-attachments/assets/a68d433f-dabd-4af8-a1b1-e3364352eea9" />
+        <img width="45%" alt="clipboard3" src="https://github.com/user-attachments/assets/9e694b96-3c64-49d7-9537-a167860edf28" />
+      </div>
+    </li>
+    <li> Baseline Visible Power (5.55 µW):
+      <br>The anomalies are caused by the surge in power when turning the laser back on. This effect is only an issue when the input power is high.</br>
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <img width="45%" alt="clipboard50" src="https://github.com/user-attachments/assets/d4521dbe-d055-4633-a747-05ff9a4ebf83" />
+        <img width="45%" alt="clipboard5" src="https://github.com/user-attachments/assets/6689b376-03c8-448f-87af-f5caf90c90a6" />
+      </div>
+    </li>
+  </ul>
+  <ul>
+  <li> Minimum Power with Noise (0.0338 µW):
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard647" src="https://github.com/user-attachments/assets/c1b268a0-6f16-4e08-8ec7-79b13b9734bf" />
+      <img width="45%" alt="clipboard6" src="https://github.com/user-attachments/assets/253b1ef9-443c-4301-8fbf-7b04d91fc94e" />
+    </div>
+  </li>
+  <li> Baseline Visible Power with Noise (5.55 µW):
+    <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard10" src="https://github.com/user-attachments/assets/46419047-cb77-4683-a9bd-dd879a29d359" />
+      <img width="45%" alt="clipboard1934" src="https://github.com/user-attachments/assets/79e69863-90a0-44c4-bd1f-5597d42f27e3" />
+    </div>
+  </li>
   </ul>
 </p>
 
