@@ -1,5 +1,6 @@
 import math
 import os
+import random
 from collections import deque
 
 import numpy as np
@@ -57,7 +58,7 @@ def test():
 
     # testing specific parameters (Including frequency plotter)
     ITERATIONS = 1000
-    TIME = 60
+    TIME = 420
     KALMAN_FILTER = True
     FSM = False
 
@@ -76,7 +77,7 @@ def test():
 
     EXPERIMENT_NAME: str = (
         f"ca_tracking_large_break_"
-        f".04A_"
+        f".003A_"
         f"T{TIME}"
         f"KF{1 if KALMAN_FILTER else 0}_"
         f"G{GAIN}_"
@@ -89,8 +90,10 @@ def test():
         f"MEU{MEASUREMENT_UNCERTAINTY}_"
     )
 
-    MODEL_UNCERTAINTY = 100
-    MEASUREMENT_UNCERTAINTY = 100
+    MODEL_UNCERTAINTY = 5e-4
+    JERK_MODEL_UNCERTAINTY = MODEL_UNCERTAINTY
+    MEASUREMENT_UNCERTAINTY = 1000
+
 
 
 
@@ -191,7 +194,13 @@ def test():
 
         first_measurement = True
         changed = False
+        reset = False
 
+        # lower = random.uniform(0.4, 0.425)
+        # upper = random.uniform(0.675, 0.7)
+        lower = 0.40
+        lower_2 = 0.4
+        upper = 0.7
         i = 0
         while time.time() - start_time < TIME:
             current_time = time.time()
@@ -235,8 +244,8 @@ def test():
                 F = np.eye(8, dtype=np.float32)
                 F[4, 4] = -1.0  # Flip ax
                 F[5, 5] = -1.0  # Flip ay
-                F[6, 6] = -1.0  # Flip jx
-                F[7, 7] = -1.0  # Flip jy
+                # F[6, 6] = -1.0  # Flip jx
+                # F[7, 7] = -1.0  # Flip jy
 
                 kalman_filter.statePost = F @ kalman_filter.statePost
 
@@ -258,13 +267,20 @@ def test():
                     insane_count += 1
 
                 # TODO Remove later
-                if TIME * 0.40 < time.time() - start_time < TIME * 0.6:
+                if TIME * lower < time.time() - start_time < TIME * upper:
                     insane_count = 1
-                    if time.time() - start_time < TIME * 0.60:
+                    if time.time() - start_time < TIME * upper:
                         measured_x = None
                         measured_y = None
                 else:
+                    if time.time() - start_time > TIME * upper and not reset:
+                        kalman_filter.processNoiseCov = np.eye(8,
+                                                                   dtype=np.float32) * 1e-6
+                        kalman_filter.measurementNoiseCov = np.eye(2,
+                                                                   dtype=np.float32) * 30
+                        reset = True
                     insane_count = 0
+
 
                 if insane_count < INSANE_THRESHOLD:
                     if first_measurement:
@@ -298,6 +314,11 @@ def test():
 
             delta_x = origin_x - new_x
             delta_y = origin_y - new_y
+            if TIME * lower_2 < time.time() - start_time < TIME * upper:
+                insane_count = 1
+                if time.time() - start_time < TIME * upper:
+                    measured_x = None
+                    measured_y = None
 
             results.loc[len(results)] = {
                 "measured_X": measured_x,
