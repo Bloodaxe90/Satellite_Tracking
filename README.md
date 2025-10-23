@@ -169,17 +169,48 @@ This repository holds the foundational code for a satellite tracking and beam st
     </li>
   </ul>
   <ul>
-  <li> Minimum Power with Noise (0.0338 µW):
-    <div style="display: flex; justify-content: space-around; align-items: center;">
-      <img width="45%" alt="clipboard647" src="https://github.com/user-attachments/assets/c1b268a0-6f16-4e08-8ec7-79b13b9734bf" />
-      <img width="45%" alt="clipboard6" src="https://github.com/user-attachments/assets/253b1ef9-443c-4301-8fbf-7b04d91fc94e" />
-    </div>
-  </li>
-  <li> Baseline Visible Power with Noise (5.55 µW):
+  <li> Minimum Power (Noise) (0.0338 µW):
     <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
     <div style="display: flex; justify-content: space-around; align-items: center;">
-      <img width="45%" alt="clipboard10" src="https://github.com/user-attachments/assets/46419047-cb77-4683-a9bd-dd879a29d359" />
-      <img width="45%" alt="clipboard1934" src="https://github.com/user-attachments/assets/79e69863-90a0-44c4-bd1f-5597d42f27e3" />
+      <img width="45%" alt="clipboard11" src="https://github.com/user-attachments/assets/a70419df-f36f-4393-82d2-60838219f491" />
+      <img width="45%" alt="clipboard1622" src="https://github.com/user-attachments/assets/e421d91a-5112-42a1-ad02-b2d99154ecc4" />
+    </div>
+  </li>
+  <li> Baseline Visible Power (Noise) (5.55 µW):
+    <br>The anomalies are caused by the surge in power when turning the laser back on. This effect is only an issue when the input power is high and there is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard1458" src="https://github.com/user-attachments/assets/3de97528-43ab-4cbf-91c6-d873fcd88dc9" />
+      <img width="45%" alt="clipboard4" src="https://github.com/user-attachments/assets/cc8e6d5b-a88c-4e16-9939-8c186d3f8350" />
+    </div>
+  </li>
+  </ul>
+  <ul>
+  <li> Minimum Power (large break) (0.0338 µW):
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard2068" src="https://github.com/user-attachments/assets/2ad6a205-4c7d-4ea6-9f0e-3bc406bc9789" />
+      <img width="45%" alt="clipboard1265" src="https://github.com/user-attachments/assets/1a24c2c9-6b9e-487c-b150-1515bfa8c424" />
+    </div>
+  </li>
+  <li> Baseline Visible Power (large break) (5.55 µW):
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard1114" src="https://github.com/user-attachments/assets/dc2b4703-9a21-4f8a-8c9f-6e8a7d76addc" />
+      <img width="45%" alt="clipboard2299" src="https://github.com/user-attachments/assets/cbfc0c76-33d2-42a3-b535-a65b7a041582" />
+    </div>
+  </li>
+  </ul>
+    <ul>
+  <li> Minimum Power (large break & noise) (0.0338 µW):
+    <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard2017" src="https://github.com/user-attachments/assets/7a1a79af-097b-4110-b2a2-b7ffd6854236" />
+      <img width="45%" alt="clipboard1143" src="https://github.com/user-attachments/assets/78d241fa-e44a-492a-bd1c-fd12de803c15" />
+    </div>
+  </li>
+  <li> Baseline Visible Power (large break & noise) (5.55 µW):
+    <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+    <div style="display: flex; justify-content: space-around; align-items: center;">
+      <img width="45%" alt="clipboard2225" src="https://github.com/user-attachments/assets/901e9b8c-0a12-431f-bf8a-7bf47cec1289" />
+      <img width="45%" alt="clipboard2212" src="https://github.com/user-attachments/assets/f67c5bd4-7893-46ed-a22c-cb50c8af494c" />
     </div>
   </li>
   </ul>
