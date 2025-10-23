@@ -170,14 +170,14 @@ This repository holds the foundational code for a satellite tracking and beam st
   </ul>
   <ul>
   <li> Minimum Power (Noise) (0.0338 µW):
-    <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+    <br>There is no noise along the y axis due to the noise generator only moving the laser along the X-axis</br>
     <div style="display: flex; justify-content: space-around; align-items: center;">
       <img width="45%" alt="clipboard11" src="https://github.com/user-attachments/assets/a70419df-f36f-4393-82d2-60838219f491" />
       <img width="45%" alt="clipboard1622" src="https://github.com/user-attachments/assets/e421d91a-5112-42a1-ad02-b2d99154ecc4" />
     </div>
   </li>
   <li> Baseline Visible Power (Noise) (5.55 µW):
-    <br>The anomalies are caused by the surge in power when turning the laser back on. This effect is only an issue when the input power is high and there is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+    <br>The anomalies are caused by the surge in power when turning the laser back on. This effect is only an issue when the input power is high and there is no noise along the y axis due to the noise generator only moving the laser along the X-axis</br>
     <div style="display: flex; justify-content: space-around; align-items: center;">
       <img width="45%" alt="clipboard1458" src="https://github.com/user-attachments/assets/3de97528-43ab-4cbf-91c6-d873fcd88dc9" />
       <img width="45%" alt="clipboard4" src="https://github.com/user-attachments/assets/cc8e6d5b-a88c-4e16-9939-8c186d3f8350" />
@@ -200,14 +200,16 @@ This repository holds the foundational code for a satellite tracking and beam st
   </ul>
     <ul>
   <li> Minimum Power (large break & noise) (0.0338 µW):
-    <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+      <br>
+      There is no noise along the Y-axis because the noise generator only affects motion along the X-axis. The failure of the Y-axis to track correctly, while the X-axis tracks as expected, is due to the X–Y offset in the model (moving the laser along the X-axis causes a slight change in the Y-axis)
+      </br>
     <div style="display: flex; justify-content: space-around; align-items: center;">
       <img width="45%" alt="clipboard2017" src="https://github.com/user-attachments/assets/7a1a79af-097b-4110-b2a2-b7ffd6854236" />
       <img width="45%" alt="clipboard1143" src="https://github.com/user-attachments/assets/78d241fa-e44a-492a-bd1c-fd12de803c15" />
     </div>
   </li>
   <li> Baseline Visible Power (large break & noise) (5.55 µW):
-    <br>There is no noise along the y axis due to the noise generator only moving the laser along the x-axis</br>
+      There is no noise along the Y-axis because the noise generator only affects motion along the X-axis. The failure of the Y-axis to track correctly, while the X-axis tracks as expected, is due to the X–Y offset in the model (moving the laser along the X-axis causes a slight change in the Y-axis)
     <div style="display: flex; justify-content: space-around; align-items: center;">
       <img width="45%" alt="clipboard2225" src="https://github.com/user-attachments/assets/901e9b8c-0a12-431f-bf8a-7bf47cec1289" />
       <img width="45%" alt="clipboard2212" src="https://github.com/user-attachments/assets/f67c5bd4-7893-46ed-a22c-cb50c8af494c" />
