@@ -1,6 +1,5 @@
 import math
 import os
-import random
 from collections import deque
 
 import numpy as np
@@ -20,6 +19,7 @@ from src.fsm.fsm_setup import setup_fsm
 from src.kalman_filter.kalman_filter_calibration import (
     is_sane_measurement,
     set_transition_matrix, is_sane_measurement2,
+    set_process_noise_covariance_matrix,
 )
 from src.utils.general import wait
 from src.utils.io import save_results
@@ -51,7 +51,6 @@ def test():
     # Kalman Filter Parameters
     # TODO need tuning
     MODEL_UNCERTAINTY = 1e-6
-    JERK_MODEL_UNCERTAINTY = 1e-9
     MEASUREMENT_UNCERTAINTY = 30
     LEARNING_ITERATIONS_KF = 100
     INSANE_THRESHOLD = 1
@@ -91,7 +90,6 @@ def test():
     )
 
     MODEL_UNCERTAINTY = 5e-4
-    JERK_MODEL_UNCERTAINTY = MODEL_UNCERTAINTY
     MEASUREMENT_UNCERTAINTY = 1000
 
 
@@ -178,7 +176,6 @@ def test():
             kalman_filter = setup_kalman_filter(
                 delta_t=initial_sample_time,
                 model_uncertainty=MODEL_UNCERTAINTY,
-                jerk_model_uncertainty= JERK_MODEL_UNCERTAINTY,
                 measurement_uncertainty=MEASUREMENT_UNCERTAINTY,
             )
 
@@ -208,8 +205,8 @@ def test():
             last_time = current_time
             if KALMAN_FILTER:
                 set_transition_matrix(kalman_filter, sample_time)
-
-
+                set_process_noise_covariance_matrix(kalman_filter, sample_time,
+                                                    MODEL_UNCERTAINTY)
                 kalman_filter.predict()
 
             raw_frame = camera_stream.read()

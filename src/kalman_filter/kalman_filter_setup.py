@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
 
-from src.kalman_filter.kalman_filter_calibration import set_transition_matrix
+from src.kalman_filter.kalman_filter_calibration import set_transition_matrix, \
+    set_process_noise_covariance_matrix
 
 
 def setup_kalman_filter(
     delta_t: float,
     model_uncertainty: float = 0.05,
-    jerk_model_uncertainty: float = 1e-6,
     measurement_uncertainty: float = 0.5,
 ) -> cv2.KalmanFilter:
     """
@@ -16,7 +16,6 @@ def setup_kalman_filter(
     Parameters:
         delta_t (float): The time between each transition
         model_uncertainty (float): How much uncertainty we have in the model accurately predicting the next position (default is 0.05) (higher value = less certain)
-        jerk_model_uncertainty (float): How much uncertainty we have in the constant jerk assumption of the model
         measurement_uncertainty (float): How much uncertainty we have in our x, y position measurements representing the actual position of the laser (default is 0.5) (higher value = less certain)
 
     Returns:
@@ -29,23 +28,7 @@ def setup_kalman_filter(
     kalman_filter: cv2.KalmanFilter = cv2.KalmanFilter(8, 2)
 
     # 1. State Transition Matrix (A) - The Physics Model
-    # This is the core of the Constant Jerk model.
-    # p_new = p + v*dt + 0.5*a*dt^2 + (1/6)*j*dt^3
-    # v_new = v + a*dt + 0.5*j*dt^2
-    # a_new = a + j*dt
-    # j_new = j  (The "Constant Jerk" assumption)
-    dt2 = 0.5 * delta_t**2
-    dt3 = (1/6) * delta_t**3
-    kalman_filter.transitionMatrix = np.array([
-        [1, 0, delta_t, 0,   dt2,   0,   dt3,   0],  # x
-        [0, 1, 0, delta_t,   0,   dt2,   0,   dt3],  # y
-        [0, 0, 1,       0, delta_t,   0,   dt2,   0],  # vx
-        [0, 0, 0,       1,   0, delta_t,   0,   dt2],  # vy
-        [0, 0, 0,       0,   1,       0, delta_t,   0],  # ax
-        [0, 0, 0,       0,   0,       1,   0, delta_t],  # ay
-        [0, 0, 0,       0,   0,       0,   1,       0],  # jx
-        [0, 0, 0,       0,   0,       0,   0,       1]   # jy
-    ], dtype=np.float32)
+    set_transition_matrix(kalman_filter, delta_t)
 
     # Measurement Matrix (H) = Maps state to measurement
     kalman_filter.measurementMatrix = np.array([
@@ -54,12 +37,9 @@ def setup_kalman_filter(
     ], dtype=np.float32)
 
     # Process Noise Covariance (Q) = Uncertainty in our model
-    kalman_filter.processNoiseCov = np.eye(8, dtype=np.float32) * model_uncertainty
-
-    jerk_process_noise = 1e-9
-
-    kalman_filter.processNoiseCov[6, 6] = jerk_process_noise
-    kalman_filter.processNoiseCov[7, 7] = jerk_process_noise
+    set_process_noise_covariance_matrix(kalman_filter,
+                                        delta_t,
+                                        model_uncertainty)
 
     # Measurement Noise Covariance (R) = Uncertainty in our measurements
     kalman_filter.measurementNoiseCov = np.eye(2, dtype=np.float32) * measurement_uncertainty

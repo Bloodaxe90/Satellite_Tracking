@@ -103,4 +103,57 @@ def set_transition_matrix(
         [0, 0, 0, 0, 0, 0, 0, 1]  # Jerk y
     ], dtype=np.float32)
 
+def set_process_noise_covariance_matrix(
+        kalman_filter: cv2.KalmanFilter,
+        delta_t: float,
+        model_uncertainty: float = 0.05
+):
+    dt = delta_t
+
+    # Position correlations
+    q_pos_pos = (dt ** 7) / 252.0
+    q_pos_vel = (dt ** 6) / 72.0
+    q_pos_acc = (dt ** 5) / 30.0
+    q_pos_jrk = (dt ** 4) / 24.0
+
+    # Velocity correlations
+    q_vel_vel = (dt ** 5) / 20.0
+    q_vel_acc = (dt ** 4) / 8.0
+    q_vel_jrk = (dt ** 3) / 6.0
+
+    # Acceleration correlations
+    q_acc_acc = (dt ** 3) / 3.0
+    q_acc_jrk = (dt ** 2) / 2.0
+
+    # Jerk correlations
+    q_jrk_jrk = dt
+
+    Q = np.array([
+        # Row 0: x (Interacts with x, vx, ax, jx)
+        [q_pos_pos, 0, q_pos_vel, 0, q_pos_acc, 0, q_pos_jrk, 0],
+
+        # Row 1: y (Interacts with y, vy, ay, jy)
+        [0, q_pos_pos, 0, q_pos_vel, 0, q_pos_acc, 0, q_pos_jrk],
+
+        # Row 2: vx (Interacts with x, vx, ax, jx)
+        [q_pos_vel, 0, q_vel_vel, 0, q_vel_acc, 0, q_vel_jrk, 0],
+
+        # Row 3: vy (Interacts with y, vy, ay, jy)
+        [0, q_pos_vel, 0, q_vel_vel, 0, q_vel_acc, 0, q_vel_jrk],
+
+        # Row 4: ax (Interacts with x, vx, ax, jx)
+        [q_pos_acc, 0, q_vel_acc, 0, q_acc_acc, 0, q_acc_jrk, 0],
+
+        # Row 5: ay (Interacts with y, vy, ay, jy)
+        [0, q_pos_acc, 0, q_vel_acc, 0, q_acc_acc, 0, q_acc_jrk],
+
+        # Row 6: jx (Interacts with x, vx, ax, jx)
+        [q_pos_jrk, 0, q_vel_jrk, 0, q_acc_jrk, 0, q_jrk_jrk, 0],
+
+        # Row 7: jy (Interacts with y, vy, ay, jy)
+        [0, q_pos_jrk, 0, q_vel_jrk, 0, q_acc_jrk, 0, q_jrk_jrk]
+    ], dtype=np.float32)
+
+    kalman_filter.processNoiseCov = Q * model_uncertainty
+
 
