@@ -18,11 +18,13 @@ This repository holds the foundational code for a satellite tracking and beam st
 
 <h3>Status</h3>
 <p>
-  The program includes a tracking and noise reduction loop, but it has not yet been fully tested or tuned.  
-  At this stage, the loop represents my initial design of how tracking and noise reduction could operate together.  
-  To allow for flexibility, the Kalman Filter can be toggled on or off so that noise reduction can be evaluated independently of tracking.  
-  The FFT-based noise frequency identification is not yet integrated into the loop, but the core code for this functionality is already implemented.
+The project currently features a functional prototype of the combined tracking and noise reduction loop. While individual components (Kalman Filter and FSM Control) are implemented, the system requires further tuning and integration testing.
 </p>
+<ul>
+<li><strong>Modular Evaluation:</strong> The Kalman Filter can be toggled on/off via flags. However, the Noise Reduction (FSM control) is currently hard-coded to "active" in the main loop. To evaluate tracking independently of noise reduction, please use <code>test.py</code>.</li>
+<li><strong>Integration Challenge:</strong> There is currently a known conflict when running both systems simultaneously. Because the noise reduction algorithm successfully centers the laser, the Kalman Filter perceives the target as stationary (zero velocity), effectively canceling out the trajectory data it needs to track. Resolving this coupling between stabilization and trajectory estimation is the primary next step.</li>
+<li><strong>FFT Integration:</strong> The Fast Fourier Transform (FFT) logic for frequency analysis is fully implemented in the codebase but has not yet been integrated into the live control loop.</li>
+</ul>
 
 <h2>Setup:</h2>
   <h3>Camera:</h3>
@@ -104,7 +106,7 @@ This repository holds the foundational code for a satellite tracking and beam st
   <ul>
     <li>
       For each laser power I measured the area, mean intensity, and standard deviation intensity. I also evaluated how well the laser could reproduce input noise (a square wave with a frequency of 1 Hz). To do this, I calculated the dominant frequency of the FFT of the pixel position over time. The frequency error plotted against laser power can also be seen below.
-      <img width="1389" height="990" alt="clipboard706" src="https://github.com/user-attachments/assets/980676aa-693e-42d9-99af-b96c717495d4" />
+  <img width="1389" height="990" alt="clipboard" src="https://github.com/user-attachments/assets/b2a5d593-e5e7-48cd-9fdd-6f1929eafe43" />
     </li>
     <li>
       Since the mean intensity and standard deviation of the detected laser depend on the beam profile’s measured area (as higher laser intensity causes the profile to “bloom” and include more of the faint halo), these raw metrics become misleading: the mean is artificially lowered, and the standard deviation inflated.
@@ -118,7 +120,7 @@ This repository holds the foundational code for a satellite tracking and beam st
             Coefficient of Variation (CV = Standard Deviation / Mean): Quantifies the relative variability of pixel intensities, offering a measure of beam uniformity independent of brightness and area.
           </li>
         </ul>
-      <img width="1390" height="490" alt="clipboard1441" src="https://github.com/user-attachments/assets/8a06ef88-2cf0-46d5-8f04-d57945c9c7db" />
+<img width="1390" height="490" alt="clipboard1" src="https://github.com/user-attachments/assets/8cbb0788-888a-4fe5-b456-1fd183bf6dac" />
       </p>
     </li>
   </ul>
