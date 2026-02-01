@@ -20,10 +20,29 @@ This repository holds the foundational code for a satellite tracking and beam st
 <p>
 The project currently features a functional prototype of the combined tracking and noise reduction loop. While individual components (Kalman Filter and FSM Control) are implemented, the system requires further tuning and integration testing.
 </p>
+<h4>Known Issues & Limitations</h4>
 <ul>
-<li><strong>Modular Evaluation:</strong> The Kalman Filter can be toggled on/off via flags. However, the Noise Reduction (FSM control) is currently hard-coded to "active" in the main loop. To evaluate tracking independently of noise reduction, please use <code>test.py</code>.</li>
-<li><strong>Integration Challenge:</strong> There is currently a known conflict when running both systems simultaneously. Because the noise reduction algorithm successfully centers the laser, the Kalman Filter perceives the target as stationary (zero velocity), effectively canceling out the trajectory data it needs to track. Resolving this coupling between stabilization and trajectory estimation is the primary next step.</li>
-<li><strong>FFT Integration:</strong> The Fast Fourier Transform (FFT) logic for frequency analysis is fully implemented in the codebase but has not yet been integrated into the live control loop.</li>
+<li>
+<strong>Control Loop Conflict:</strong> There is a known conflict when running tracking and stabilization simultaneously. The noise reduction (FSM control) successfully centers the laser, which causes the Kalman Filter to perceive the target as stationary. This effectively masks the satellite's trajectory from the filter. Resolving this would be the main next step.
+</li>
+<li>
+<strong>Static Tuning Parameters:</strong> The optimal tuning parameters for the Kalman Filter's Process Noise ($Q$) and Measurement Noise ($R$) were found to be different for continuous tracking vs. tracking with intermittent or long signal breaks. A single, static set of parameters is a compromise and may not be optimal for all scenarios.
+</li>
+<li>
+<strong>Hard-coded Modules:</strong> The Noise Reduction (FSM control) is currently hard-coded as "active" in the main loop. To evaluate tracking independently, please use the scripts in the <code>test.py</code> file.
+</li>
+</ul>
+<h4>Future Work & Proposed Solutions</h4>
+<ul>
+<li>
+<strong>Dynamic Model Switching:</strong> To address the issue of static tuning parameters, an adaptive filtering approach could be implemented. This would involve either dynamically adjusting the $Q$ and $R$ values based on the current scenario, or switching between discrete filter models (e.g. a "high-certainty" model for active tracking and a "high-uncertainty" model for prediction over breaks).
+</li>
+<li>
+<strong>Intelligent Re-acquisition Logic:</strong> A potential failure exists where the filter, after a long time of prediction, becomes overconfident in its prediction and rejects the valid re-appearance of the satellite. A more sophisticated re-acquisition algorithm is needed. This could involve temporarily expanding the filter's validation gate after a signal loss or using a secondary, simpler detection algorithm to alert the main filter that the target is back in view.
+</li>
+<li>
+<strong>FFT Integration:</strong> The Fast Fourier Transform (FFT) logic for frequency analysis in use in a local ocillator is fully implemented but has not yet been integrated into the live control loop.
+</li>
 </ul>
 
 <h2>Setup:</h2>
