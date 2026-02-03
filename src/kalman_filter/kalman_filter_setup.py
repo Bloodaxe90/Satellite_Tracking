@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
 
-from src.kalman_filter.kalman_filter_calibration import set_transition_matrix, \
-    set_process_noise_covariance_matrix
+from src.kalman_filter.kalman_filter_calibration import set_transition_matrix
 
 
 def setup_kalman_filter(
@@ -37,9 +36,7 @@ def setup_kalman_filter(
     ], dtype=np.float32)
 
     # Process Noise Covariance (Q) = Uncertainty in our model
-    set_process_noise_covariance_matrix(kalman_filter,
-                                        delta_t,
-                                        model_uncertainty)
+    kalman_filter.processNoiseCov = np.eye(8, dtype=np.float32) * model_uncertainty
 
     # Measurement Noise Covariance (R) = Uncertainty in our measurements
     kalman_filter.measurementNoiseCov = np.eye(2, dtype=np.float32) * measurement_uncertainty

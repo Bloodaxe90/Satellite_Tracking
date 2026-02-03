@@ -18,8 +18,7 @@ from src.fsm.fsm_calibration import get_distance_to_camera, get_response_time
 from src.fsm.fsm_setup import setup_fsm
 from src.kalman_filter.kalman_filter_calibration import (
     is_sane_measurement,
-    set_transition_matrix, is_sane_measurement2,
-    set_process_noise_covariance_matrix,
+    set_transition_matrix
 )
 from src.utils.general import wait
 from src.utils.io import save_results
@@ -57,12 +56,12 @@ def test():
 
     # testing specific parameters (Including frequency plotter)
     ITERATIONS = 1000
-    TIME = 420
-    KALMAN_FILTER = True
+    TIME = 300
+    KALMAN_FILTER = False
     FSM = False
 
     # Linear FSM
-    FSM_LINEAR = True
+    FSM_LINEAR = False
     initial_amplitude_x = -0.04
     initial_amplitude_y = -0.04
     scaling_factor = TIME / 60
@@ -75,7 +74,7 @@ def test():
     amp_y_dec = 2 - amp_y_acc
 
     EXPERIMENT_NAME: str = (
-        f"ca_tracking_large_break_"
+        f"ca_tracking_"
         f".003A_"
         f"T{TIME}"
         f"KF{1 if KALMAN_FILTER else 0}_"
@@ -91,9 +90,6 @@ def test():
 
     MODEL_UNCERTAINTY = 5e-4
     MEASUREMENT_UNCERTAINTY = 1000
-
-
-
 
     results = pd.DataFrame(
         columns=[
@@ -191,13 +187,7 @@ def test():
 
         first_measurement = True
         changed = False
-        reset = False
 
-        # lower = random.uniform(0.4, 0.425)
-        # upper = random.uniform(0.675, 0.7)
-        lower = 0.40
-        lower_2 = 0.4
-        upper = 0.7
         i = 0
         while time.time() - start_time < TIME:
             current_time = time.time()
@@ -205,8 +195,6 @@ def test():
             last_time = current_time
             if KALMAN_FILTER:
                 set_transition_matrix(kalman_filter, sample_time)
-                set_process_noise_covariance_matrix(kalman_filter, sample_time,
-                                                    MODEL_UNCERTAINTY)
                 kalman_filter.predict()
 
             raw_frame = camera_stream.read()
@@ -263,22 +251,6 @@ def test():
                 else:
                     insane_count += 1
 
-                # TODO Remove later
-                if TIME * lower < time.time() - start_time < TIME * upper:
-                    insane_count = 1
-                    if time.time() - start_time < TIME * upper:
-                        measured_x = None
-                        measured_y = None
-                else:
-                    if time.time() - start_time > TIME * upper and not reset:
-                        kalman_filter.processNoiseCov = np.eye(8,
-                                                                   dtype=np.float32) * 1e-6
-                        kalman_filter.measurementNoiseCov = np.eye(2,
-                                                                   dtype=np.float32) * 30
-                        reset = True
-                    insane_count = 0
-
-
                 if insane_count < INSANE_THRESHOLD:
                     if first_measurement:
                         first_measurement = False
@@ -311,20 +283,15 @@ def test():
 
             delta_x = origin_x - new_x
             delta_y = origin_y - new_y
-            if TIME * lower_2 < time.time() - start_time < TIME * upper:
-                insane_count = 1
-                if time.time() - start_time < TIME * upper:
-                    measured_x = None
-                    measured_y = None
 
             results.loc[len(results)] = {
                 "measured_X": measured_x,
                 "measured_Y": measured_y,
                 "estimated_X": (
-                    kalman_filter.statePost[0, 0] if True else new_x
+                    kalman_filter.statePost[0, 0] if KALMAN_FILTER else new_x
                 ),
                 "estimated_Y": (
-                    kalman_filter.statePost[1, 0] if True else new_y
+                    kalman_filter.statePost[1, 0] if KALMAN_FILTER else new_y
                 ),
                 "delta_x": delta_x,
                 "delta_y": delta_y,
