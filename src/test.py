@@ -236,7 +236,10 @@ def test():
                     else True
                 )  # Assumes the first 100 measurements are accurate to gather values for prediction
 
-                insane_count += -insane_count if sane_measurement else 1
+                if sane_measurement:
+                    insane_count = 0
+                else:
+                    insane_count += 1
 
                 if insane_count < INSANE_THRESHOLD:
                     if first_measurement:
