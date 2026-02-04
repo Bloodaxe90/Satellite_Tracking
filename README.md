@@ -10,10 +10,40 @@ This repository holds the foundational code for a satellite tracking and beam st
   <li>Hardware control with ZWO ASI cameras and Optotune FSM controllers</li>
   <li>Fast Steering Mirror (FSM) noise reduction</li>
   <li>Constant-velocity Kalman Filter tracking</li>
-  <li>Changing-acceleration Kalman Filter tracking (changing_acceleration_kf branch)</li>
+  <li>Changing-acceleration Kalman Filter tracking (ca_tracking_kf branch)</li>
   <li>Kalman Filter parameter tuning</li>
   <li>System setup and calibration tools</li>
   <li>FFT-based noise frequency identification</li>
+</ul>
+
+<h3>Repository Structure</h3>
+<p>
+This project is organized into two primary branches, each representing a different motion model and stage of development.
+</p>
+<ul>
+  <li>
+  <h4><code>main</code> Branch (Stable - Constant Velocity Model)</h4>
+  <p>
+  This branch contains the complete, integrated tracking and noise reduction system. It is designed around a <strong>Constant Velocity (CV)</strong> Kalman Filter, suitable for tracking linear motion. All features described in this README are fully functional on this branch.
+  </p>
+  </li>
+  <li>
+  <h4><code>ca_tracking_kf</code> Branch (Experimental - Constant Jerk Proof of Concept)</h4>
+  <p>
+  This branch serves as a proof-of-concept for tracking a more realistic, non-linear satellite trajectory. It is an unfinished development branch with key modifications isolated for demonstration purposes.
+  </p>
+    <ul>
+      <li>
+      <strong>Motion Model:</strong> The FSM is programmed to move the laser in an "S-Curve" by applying exponentially increasing and decreasing angle increments, simulating a satellite pass with changing acceleration.
+      </li>
+      <li>
+      <strong>Tracking Filter:</strong> It implements a <strong>Constant Jerk (CJ)</strong> Kalman filter to handle the non-linear dynamics.
+      </li>
+      <li>
+      <strong>Implementation:</strong> The core demonstration of the S-curve generation and CJ tracking is contained within the <code>test.py</code> script. <strong>Note:</strong> This logic has not been integrated into the main application's control loop and should be used as a reference for the mathematical implementation.
+      </li>
+    </ul>
+  </li>
 </ul>
 
 <h3>Status</h3>
