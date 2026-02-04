@@ -2,7 +2,7 @@
 
 <h2>Description:</h2>
 <p>
-This repository holds the foundational code for a satellite tracking and beam stabilization system.
+This repository holds the foundational code for a satellite tracking and beam stabilization system as part of the work on the paper <strong>"Energy Efficient Optical Tracking for Space Quantum Communication."</strong>
 </p>
 
 <h3>Features</h3>
