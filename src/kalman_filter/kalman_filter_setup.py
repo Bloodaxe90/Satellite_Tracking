@@ -10,7 +10,7 @@ def setup_kalman_filter(
     measurement_uncertainty: float = 0.5,
 ) -> cv2.KalmanFilter:
     """
-    Sets up a Kalman filter to track position and velocity using a constant velocity model
+    Sets up a Kalman filter to track position and velocity using a constant jerk model
 
     Parameters:
         delta_t (float): The time between each transition
@@ -22,7 +22,7 @@ def setup_kalman_filter(
     """
 
     print("Setting up Kalman Filter\n")
-    # States of x position, y position, x velocity, y velocity
+    # States of x position, y position, x velocity, y velocity, x acceleration, y acceleration, x jerk, y jerk
     # Measures the x position and y position
     kalman_filter: cv2.KalmanFilter = cv2.KalmanFilter(8, 2)
 

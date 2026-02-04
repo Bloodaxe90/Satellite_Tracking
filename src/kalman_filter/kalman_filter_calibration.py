@@ -9,7 +9,7 @@ def is_sane_measurement(
     kalman_filter: cv2.KalmanFilter,
     measured_x: float,
     measured_y: float,
-    threshold: float = 500,  # Chi-squared value for p=0.01 with 2 DOF
+    threshold: float = 9.21,  # Chi-squared value for p=0.01 with 2 DOF
 ) -> bool | np.ndarray[tuple[int, ...], np.dtype[bool]]:
     """
     Validate whether a measurement is statistically consistent with the Kalman filter prediction.
@@ -51,37 +51,12 @@ def is_sane_measurement(
     # Checks weather the measurement falls within 99% confidence of the models prediction
     return mahalanobis_distance_squared < threshold
 
-def is_sane_measurement2(
-        old_measured_x,
-        old_measured_y,
-        measured_x,
-        measured_y,
-        std_devs: int,
-        distances: deque):
-    if not distances:
-        return True
-
-    if measured_x is None or measured_y is None:
-        return False
-
-    current_distance_x = abs(old_measured_x - measured_x)
-    current_distance_y = abs(old_measured_y - measured_y)
-    mean_distance_x = np.mean([i[0] for i in distances], axis = 0)
-    mean_distance_y = np.mean([i[1] for i in distances], axis = 0)
-    std_dev_distance_x = np.std([i[0] for i in distances], axis = 0)
-    std_dev_distance_y = np.std([i[1] for i in distances], axis = 0)
-
-    threshold_x = mean_distance_x + (std_dev_distance_x * std_devs)
-    threshold_y = mean_distance_y + (std_dev_distance_y * std_devs)
-
-    return current_distance_x <= threshold_x or current_distance_y <= threshold_y
-
 def set_transition_matrix(
     kalman_filter: cv2.KalmanFilter,
     delta_t: float,
 ) -> None:
     """
-    Set the Kalman filter's state transition matrix for a constant velocity model.
+    Set the Kalman filter's state transition matrix for a constant jerk model.
 
     Args:
         kalman_filter (cv2.KalmanFilter): The Kalman filter instance to update

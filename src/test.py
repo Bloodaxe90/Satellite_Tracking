@@ -26,6 +26,25 @@ from src.kalman_filter.kalman_filter_setup import setup_kalman_filter
 
 
 def test():
+
+    """
+    Experimental test function for independent validation and debugging
+
+    This function is not part of the core tracking mechanism and is primarily used
+    for messy testing. It was originally written to:
+      - Record noise characteristics from the camera with the FSM turned off
+      - Run and retrieve results from changing acceleration tracking experiments without involving
+        the FSM
+      - Provide a quick environment to test new ideas
+
+    Notes:
+        - The function mixes setup, capture, filtering, and FSM logic in one place
+          and is intentionally unstructured
+        - Results are logged for later inspection
+        - Should not be relied on for production use; serves only for
+          testing new ideas or debugging issues
+    """
+
     # General Parameters
     ROOT_DIR = os.path.dirname(os.getcwd())
 
